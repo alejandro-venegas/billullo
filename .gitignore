@@ -7,10 +7,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build output
 dist
 dist-ssr
 *.local
+
+# Environment variables
+.env
+.env.*
+!.env.example
 
 # History
 .history
@@ -18,10 +26,28 @@ dist-ssr
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
 .idea
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
+
+# .NET build artifacts
+bin/
+obj/
+
+# .NET user-specific and IDE files
+*.user
+.vs/
+*.rsuser
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# Generated files
+swagger.json

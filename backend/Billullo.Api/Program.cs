@@ -70,6 +70,15 @@ builder.Services.AddScoped<IEmailConfigService, EmailConfigService>();
 builder.Services.AddScoped<IEmailParsingRuleService, EmailParsingRuleService>();
 builder.Services.AddScoped<IEmailParserService, EmailParserService>();
 
+// ── Currency Service ──
+_ = builder.Configuration["FreeCurrencyApi:ApiKey"]
+    ?? throw new InvalidOperationException("FreeCurrencyApi:ApiKey not configured. Use 'dotnet user-secrets set \"FreeCurrencyApi:ApiKey\" \"<key>\"'.");
+
+builder.Services.AddHttpClient("FreeCurrencyApi", c =>
+    c.BaseAddress = new Uri("https://api.freecurrencyapi.com/v1/"));
+builder.Services.AddScoped<ICurrencyService, CurrencyService>();
+builder.Services.AddHostedService<CurrencyRateSyncService>();
+
 // ── Background Service ──
 // Register as a singleton so the hosted service and IEmailScrapingControl
 // both resolve the same instance, allowing the controller to signal it directly.

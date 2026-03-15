@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
     public DbSet<EmailParsingRule> EmailParsingRules => Set<EmailParsingRule>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -164,6 +165,16 @@ public class AppDbContext : IdentityDbContext<AppUser>
                 .WithMany()
                 .HasForeignKey(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── ExchangeRate ──
+        builder.Entity<ExchangeRate>(e =>
+        {
+            e.HasIndex(er => new { er.BaseCurrency, er.QuoteCurrency });
+            e.HasIndex(er => er.FetchedAt);
+            e.Property(er => er.BaseCurrency).HasMaxLength(10);
+            e.Property(er => er.QuoteCurrency).HasMaxLength(10);
+            e.Property(er => er.Rate).HasPrecision(18, 6);
         });
     }
 }

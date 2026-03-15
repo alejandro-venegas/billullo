@@ -19,7 +19,36 @@ billullo/
 
 ### Backend
 
-See the backend directory for .NET setup instructions.
+```bash
+cd backend/Billullo.Api
+dotnet run
+```
+
+The API starts at `http://localhost:5000` by default. In development, the database is auto-migrated on startup.
+
+#### Required Secrets
+
+Secrets are managed via `dotnet user-secrets` for local development. Run these once from `backend/Billullo.Api/`:
+
+```bash
+dotnet user-secrets init
+```
+
+Then set each required secret:
+
+| Secret key | Description |
+|---|---|
+| `Jwt:Secret` | Long random string used to sign JWT tokens (≥ 32 chars) |
+| `FreeCurrencyApi:ApiKey` | API key from [freecurrencyapi.com](https://freecurrencyapi.com) (free tier works) |
+
+```bash
+dotnet user-secrets set "Jwt:Secret" "<your-jwt-secret>"
+dotnet user-secrets set "FreeCurrencyApi:ApiKey" "<your-api-key>"
+```
+
+#### Exchange Rate Sync
+
+The backend automatically fetches USD/CRC exchange rates from FreeCurrencyAPI every 4 hours and stores them in the `ExchangeRates` table. Rates are fetched on startup and then on each 4-hour interval. This data will be used for currency conversion in balance calculations and reports.
 
 ### Frontend
 
