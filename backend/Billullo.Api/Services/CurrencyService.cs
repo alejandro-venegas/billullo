@@ -18,33 +18,43 @@ public class CurrencyService(
 
     public async Task FetchAndStoreRatesAsync(CancellationToken cancellationToken = default)
     {
-        var apiKey = configuration["FreeCurrencyApi:ApiKey"]!;
-        var currencies = string.Join(",", TrackedCurrencies);
+        var apiKey = configuration["ExchangeRateApi:ApiKey"]!;
 
-        var client = httpClientFactory.CreateClient("FreeCurrencyApi");
-        var url = $"latest?apikey={apiKey}&base_currency={BaseCurrency}&currencies={currencies}";
+        var client = httpClientFactory.CreateClient("ExchangeRateApi");
+        var url = $"{apiKey}/latest/{BaseCurrency}";
 
         var response = await client.GetAsync(url, cancellationToken);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogError(
+                "ExchangeRate-API returned {StatusCode}: {Body}",
+                (int)response.StatusCode,
+                errorBody);
+            response.EnsureSuccessStatusCode();
+        }
 
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
-        var result = JsonSerializer.Deserialize<FreeCurrencyApiResponse>(json);
+        var result = JsonSerializer.Deserialize<ExchangeRateApiResponse>(json);
 
-        if (result?.Data is null)
+        if (result?.ConversionRates is null || result.Result != "success")
         {
-            logger.LogWarning("FreeCurrencyAPI returned an empty or unexpected response.");
+            logger.LogWarning("ExchangeRate-API returned an empty or unsuccessful response.");
             return;
         }
 
         var fetchedAt = DateTime.UtcNow;
 
-        var rates = result.Data.Select(kvp => new ExchangeRate
-        {
-            BaseCurrency = BaseCurrency,
-            QuoteCurrency = kvp.Key,
-            Rate = kvp.Value.Value,
-            FetchedAt = fetchedAt
-        });
+        var rates = result.ConversionRates
+            .Where(kvp => TrackedCurrencies.Contains(kvp.Key))
+            .Select(kvp => new ExchangeRate
+            {
+                BaseCurrency = BaseCurrency,
+                QuoteCurrency = kvp.Key,
+                Rate = kvp.Value,
+                FetchedAt = fetchedAt
+            });
 
         db.ExchangeRates.AddRange(rates);
         await db.SaveChangesAsync(cancellationToken);
@@ -52,7 +62,9 @@ public class CurrencyService(
         logger.LogInformation(
             "Exchange rates updated at {FetchedAt}: {Rates}",
             fetchedAt,
-            string.Join(", ", result.Data.Select(kvp => $"{BaseCurrency}/{kvp.Key}={kvp.Value.Value}")));
+            string.Join(", ", result.ConversionRates
+                .Where(kvp => TrackedCurrencies.Contains(kvp.Key))
+                .Select(kvp => $"{BaseCurrency}/{kvp.Key}={kvp.Value}")));
     }
 
     public async Task<ExchangeRate?> GetLatestRateAsync(string baseCurrency, string quoteCurrency)
@@ -63,15 +75,12 @@ public class CurrencyService(
             .FirstOrDefaultAsync();
     }
 
-    private sealed class FreeCurrencyApiResponse
+    private sealed class ExchangeRateApiResponse
     {
-        [JsonPropertyName("data")]
-        public Dictionary<string, CurrencyValue>? Data { get; set; }
-    }
+        [JsonPropertyName("result")]
+        public string? Result { get; set; }
 
-    private sealed class CurrencyValue
-    {
-        [JsonPropertyName("value")]
-        public decimal Value { get; set; }
+        [JsonPropertyName("conversion_rates")]
+        public Dictionary<string, decimal>? ConversionRates { get; set; }
     }
 }

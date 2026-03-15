@@ -39,16 +39,16 @@ Then set each required secret:
 | Secret key | Description |
 |---|---|
 | `Jwt:Secret` | Long random string used to sign JWT tokens (≥ 32 chars) |
-| `FreeCurrencyApi:ApiKey` | API key from [freecurrencyapi.com](https://freecurrencyapi.com) (free tier works) |
+| `ExchangeRateApi:ApiKey` | API key from [exchangerate-api.com](https://www.exchangerate-api.com) (free tier works) |
 
 ```bash
 dotnet user-secrets set "Jwt:Secret" "<your-jwt-secret>"
-dotnet user-secrets set "FreeCurrencyApi:ApiKey" "<your-api-key>"
+dotnet user-secrets set "ExchangeRateApi:ApiKey" "<your-api-key>"
 ```
 
 #### Exchange Rate Sync
 
-The backend automatically fetches USD/CRC exchange rates from FreeCurrencyAPI every 4 hours and stores them in the `ExchangeRates` table. Rates are fetched on startup and then on each 4-hour interval. This data will be used for currency conversion in balance calculations and reports.
+The backend automatically fetches USD/CRC exchange rates from ExchangeRate-API every 4 hours and stores them in the `ExchangeRates` table. Rates are fetched on startup and then on each 4-hour interval. This data will be used for currency conversion in balance calculations and reports.
 
 ### Frontend
 

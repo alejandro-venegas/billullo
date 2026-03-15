@@ -71,11 +71,11 @@ builder.Services.AddScoped<IEmailParsingRuleService, EmailParsingRuleService>();
 builder.Services.AddScoped<IEmailParserService, EmailParserService>();
 
 // ── Currency Service ──
-_ = builder.Configuration["FreeCurrencyApi:ApiKey"]
-    ?? throw new InvalidOperationException("FreeCurrencyApi:ApiKey not configured. Use 'dotnet user-secrets set \"FreeCurrencyApi:ApiKey\" \"<key>\"'.");
+_ = builder.Configuration["ExchangeRateApi:ApiKey"]
+    ?? throw new InvalidOperationException("ExchangeRateApi:ApiKey not configured. Use 'dotnet user-secrets set \"ExchangeRateApi:ApiKey\" \"<key>\"'.");
 
-builder.Services.AddHttpClient("FreeCurrencyApi", c =>
-    c.BaseAddress = new Uri("https://api.freecurrencyapi.com/v1/"));
+builder.Services.AddHttpClient("ExchangeRateApi", c =>
+    c.BaseAddress = new Uri("https://v6.exchangerate-api.com/v6/"));
 builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 builder.Services.AddHostedService<CurrencyRateSyncService>();
 

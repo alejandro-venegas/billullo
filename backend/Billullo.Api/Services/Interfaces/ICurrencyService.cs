@@ -5,7 +5,7 @@ namespace Billullo.Api.Services.Interfaces;
 public interface ICurrencyService
 {
     /// <summary>
-    /// Fetches the latest USD/CRC exchange rates from FreeCurrencyAPI and persists them to the database.
+    /// Fetches the latest USD/CRC exchange rates from ExchangeRate-API and persists them to the database.
     /// </summary>
     Task FetchAndStoreRatesAsync(CancellationToken cancellationToken = default);
 
