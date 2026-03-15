@@ -1,0 +1,408 @@
+using System.Text.RegularExpressions;
+using Ledger.Api.Data;
+using Ledger.Api.Models;
+using Ledger.Api.Services.Interfaces;
+using MailKit;
+using MailKit.Net.Imap;
+using MailKit.Search;
+using MailKit.Security;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
+using MimeKit;
+
+namespace Ledger.Api.Services;
+
+/// <summary>
+/// Background service that monitors email inboxes via IMAP IDLE for new bank transaction emails.
+/// For each user with an enabled EmailConfig, it maintains an IMAP connection and creates
+/// transactions automatically when matching emails arrive.
+/// </summary>
+public class EmailScrapingService : BackgroundService
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<EmailScrapingService> _logger;
+
+    // Track active connections per user
+    private readonly Dictionary<string, CancellationTokenSource> _userConnections = new();
+    private readonly object _lock = new();
+
+    public EmailScrapingService(IServiceScopeFactory scopeFactory, ILogger<EmailScrapingService> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Email scraping service starting...");
+
+        // Wait briefly for app startup to complete
+        await Task.Delay(5000, stoppingToken);
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await RefreshConnectionsAsync(stoppingToken);
+            }
+            catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+            {
+                _logger.LogError(ex, "Error refreshing email connections.");
+            }
+
+            // Re-check for config changes every 60 seconds
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+            }
+            catch (TaskCanceledException)
+            {
+                break;
+            }
+        }
+
+        // Cleanup
+        lock (_lock)
+        {
+            foreach (var cts in _userConnections.Values)
+                cts.Cancel();
+            _userConnections.Clear();
+        }
+    }
+
+    private async Task RefreshConnectionsAsync(CancellationToken stoppingToken)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var enabledConfigs = await db.EmailConfigs
+            .Where(ec => ec.Enabled)
+            .ToListAsync(stoppingToken);
+
+        var enabledUserIds = enabledConfigs.Select(c => c.UserId).ToHashSet();
+
+        lock (_lock)
+        {
+            // Stop connections for users who disabled their config
+            var toRemove = _userConnections.Keys.Except(enabledUserIds).ToList();
+            foreach (var userId in toRemove)
+            {
+                _logger.LogInformation("Stopping email monitoring for user {UserId}", userId);
+                _userConnections[userId].Cancel();
+                _userConnections.Remove(userId);
+            }
+        }
+
+        // Start connections for new enabled configs
+        foreach (var config in enabledConfigs)
+        {
+            bool alreadyRunning;
+            lock (_lock)
+            {
+                alreadyRunning = _userConnections.ContainsKey(config.UserId);
+            }
+
+            if (!alreadyRunning)
+            {
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                lock (_lock)
+                {
+                    _userConnections[config.UserId] = cts;
+                }
+
+                _ = Task.Run(() => MonitorMailboxAsync(config.UserId, cts.Token), cts.Token);
+            }
+        }
+    }
+
+    private async Task MonitorMailboxAsync(string userId, CancellationToken cancellationToken)
+    {
+        var retryDelay = TimeSpan.FromSeconds(10);
+        const int maxRetryDelay = 300; // 5 minutes max
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var dataProtection = scope.ServiceProvider.GetRequiredService<IDataProtectionProvider>();
+                var protector = dataProtection.CreateProtector("EmailConfig.Password");
+                var parser = scope.ServiceProvider.GetRequiredService<IEmailParserService>();
+
+                var config = await db.EmailConfigs
+                    .FirstOrDefaultAsync(ec => ec.UserId == userId && ec.Enabled, cancellationToken);
+
+                if (config == null)
+                {
+                    _logger.LogInformation("Email config disabled or removed for user {UserId}, stopping monitor.", userId);
+                    break;
+                }
+
+                string password;
+                try
+                {
+                    password = protector.Unprotect(config.EncryptedPassword);
+                }
+                catch
+                {
+                    _logger.LogError("Failed to decrypt password for user {UserId}", userId);
+                    break;
+                }
+
+                using var imapClient = new ImapClient();
+                var secureSocketOptions = config.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTlsWhenAvailable;
+
+                await imapClient.ConnectAsync(config.ImapHost, config.ImapPort, secureSocketOptions, cancellationToken);
+
+                await imapClient.AuthenticateAsync(config.EmailAddress, password, cancellationToken);
+
+                _logger.LogInformation("Connected to IMAP for user {UserId} at {Host}", userId, config.ImapHost);
+                retryDelay = TimeSpan.FromSeconds(10); // Reset retry delay on successful connection
+
+                var inbox = imapClient.Inbox;
+                await inbox.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
+
+                // Process any unread emails since last check
+                await ProcessNewEmailsAsync(db, parser, inbox, config, cancellationToken);
+
+                // Enter IDLE loop
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    // Use IDLE if supported, otherwise poll
+                    if (imapClient.Capabilities.HasFlag(ImapCapabilities.Idle))
+                    {
+                        using var idleDone = new CancellationTokenSource();
+                        var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, idleDone.Token);
+
+                        // Register for count changes
+                        var countChanged = false;
+                        inbox.CountChanged += (s, e) =>
+                        {
+                            countChanged = true;
+                            idleDone.Cancel();
+                        };
+
+                        try
+                        {
+                            // IDLE for up to 9 minutes (IMAP servers often timeout at 30 min, we re-idle frequently)
+                            _ = Task.Delay(TimeSpan.FromMinutes(9), cancellationToken).ContinueWith(_ => idleDone.Cancel(), TaskScheduler.Default);
+                            await imapClient.IdleAsync(linkedCts.Token);
+                        }
+                        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                        {
+                            // IDLE was cancelled due to timeout or new message — normal flow
+                        }
+
+                        if (countChanged)
+                        {
+                            // Re-open scope for fresh DB context
+                            using var innerScope = _scopeFactory.CreateScope();
+                            var innerDb = innerScope.ServiceProvider.GetRequiredService<AppDbContext>();
+                            var innerParser = innerScope.ServiceProvider.GetRequiredService<IEmailParserService>();
+
+                            // Reload config for latest LastCheckedUid
+                            var freshConfig = await innerDb.EmailConfigs
+                                .FirstOrDefaultAsync(ec => ec.UserId == userId, cancellationToken);
+
+                            if (freshConfig != null)
+                                await ProcessNewEmailsAsync(innerDb, innerParser, inbox, freshConfig, cancellationToken);
+                        }
+                    }
+                    else
+                    {
+                        // Fallback: poll every 2 minutes
+                        await Task.Delay(TimeSpan.FromMinutes(2), cancellationToken);
+
+                        using var innerScope = _scopeFactory.CreateScope();
+                        var innerDb = innerScope.ServiceProvider.GetRequiredService<AppDbContext>();
+                        var innerParser = innerScope.ServiceProvider.GetRequiredService<IEmailParserService>();
+
+                        var freshConfig = await innerDb.EmailConfigs
+                            .FirstOrDefaultAsync(ec => ec.UserId == userId, cancellationToken);
+
+                        if (freshConfig != null)
+                            await ProcessNewEmailsAsync(innerDb, innerParser, inbox, freshConfig, cancellationToken);
+                    }
+                }
+
+                await imapClient.DisconnectAsync(true, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Email connection error for user {UserId}, retrying in {Delay}s", userId, retryDelay.TotalSeconds);
+                try
+                {
+                    await Task.Delay(retryDelay, cancellationToken);
+                }
+                catch (TaskCanceledException) { break; }
+
+                // Exponential backoff
+                retryDelay = TimeSpan.FromSeconds(Math.Min(retryDelay.TotalSeconds * 2, maxRetryDelay));
+            }
+        }
+
+        lock (_lock)
+        {
+            _userConnections.Remove(userId);
+        }
+    }
+
+    private async Task ProcessNewEmailsAsync(
+        AppDbContext db,
+        IEmailParserService parser,
+        IMailFolder inbox,
+        EmailConfig config,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var parsingRules = await db.EmailParsingRules
+                .Where(r => r.UserId == config.UserId)
+                .OrderBy(r => r.Priority)
+                .ToListAsync(cancellationToken);
+
+            if (parsingRules.Count == 0) return;
+
+            // Find new messages since last check
+            var allUids = await inbox.SearchAsync(SearchQuery.All, cancellationToken);
+            IList<UniqueId> uids;
+            if (config.LastCheckedUid.HasValue)
+            {
+                // Filter to only UIDs newer than the last processed one.
+                // We avoid using UID range search with * because IMAP's * resolves to the
+                // current max UID — if no new emails exist, the server swaps the range bounds
+                // and returns the already-processed email (RFC 3501 §6.4.8).
+                uids = allUids.Where(u => u.Id > config.LastCheckedUid.Value).ToList();
+            }
+            else
+            {
+                // First run: only process last 50 emails to avoid backfilling entire inbox
+                uids = allUids;
+                if (uids.Count > 50)
+                    uids = uids.Skip(uids.Count - 50).ToList();
+            }
+
+            if (uids.Count == 0)
+            {
+                _logger.LogInformation("No new emails for user {UserId}", config.UserId);
+                return;
+            }
+
+            _logger.LogInformation("Processing {Count} new emails for user {UserId}", uids.Count, config.UserId);
+
+            uint maxUid = config.LastCheckedUid ?? 0;
+
+            foreach (var uid in uids)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+
+                try
+                {
+                    var message = await inbox.GetMessageAsync(uid, cancellationToken);
+                    await TryCreateTransactionFromEmailAsync(db, parser, config.UserId, message, parsingRules, cancellationToken);
+
+                    if (uid.Id > maxUid)
+                        maxUid = uid.Id;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error processing email UID {Uid} for user {UserId}", uid, config.UserId);
+                }
+            }
+
+            // Update last checked UID
+            if (maxUid > (config.LastCheckedUid ?? 0))
+            {
+                config.LastCheckedUid = maxUid;
+                await db.SaveChangesAsync(cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing emails for user {UserId}", config.UserId);
+        }
+    }
+
+    private async Task TryCreateTransactionFromEmailAsync(
+        AppDbContext db,
+        IEmailParserService parser,
+        string userId,
+        MimeMessage message,
+        List<EmailParsingRule> parsingRules,
+        CancellationToken cancellationToken)
+    {
+        var sender = message.From.Mailboxes.FirstOrDefault()?.Address ?? string.Empty;
+        var subject = message.Subject ?? string.Empty;
+        var body = message.HtmlBody ?? message.TextBody ?? string.Empty;
+
+        foreach (var rule in parsingRules)
+        {
+            // Check sender match
+            if (!string.IsNullOrEmpty(rule.SenderAddress) &&
+                !sender.Contains(rule.SenderAddress, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            // Check subject match
+            if (!string.IsNullOrEmpty(rule.SubjectPattern))
+            {
+                try
+                {
+                    if (!Regex.IsMatch(subject, rule.SubjectPattern, RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1)))
+                        continue;
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+
+            // Rule matched — parse the email
+            var result = parser.ParseEmail(
+                body,
+                rule.AmountRegex,
+                rule.DateRegex,
+                rule.DateFormat,
+                rule.CurrencyFixed?.ToString(),
+                rule.CurrencyRegex,
+                rule.DescriptionFixed,
+                rule.DescriptionRegex,
+                fallbackDate: message.Date.UtcDateTime
+            );
+
+            if (!result.Matched || !result.Amount.HasValue || !result.Date.HasValue) continue;
+
+            // Parse currency
+            var currency = Currency.USD;
+            if (!string.IsNullOrEmpty(result.Currency) && Enum.TryParse<Currency>(result.Currency, true, out var parsedCurrency))
+                currency = parsedCurrency;
+
+            var transaction = new Transaction
+            {
+                UserId = userId,
+                Date = result.Date.Value,
+                Description = result.Description ?? subject,
+                CategoryId = rule.CategoryId,
+                Amount = result.Amount.Value,
+                Currency = currency,
+                Type = rule.TransactionType,
+                Source = TransactionSource.Email,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            db.Transactions.Add(transaction);
+            await db.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation(
+                "Created transaction from email for user {UserId}: {Amount} {Currency} - {Description}",
+                userId, transaction.Amount, transaction.Currency, transaction.Description);
+
+            break; // Only first matching rule creates a transaction
+        }
+    }
+}

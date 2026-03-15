@@ -1,0 +1,58 @@
+using Billullo.Api.DTOs;
+using Billullo.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Billullo.Api.Controllers;
+
+[Route("api/[controller]")]
+public class TransactionsController : AuthorizedControllerBase
+{
+    private readonly ITransactionService _service;
+
+    public TransactionsController(ITransactionService service)
+    {
+        _service = service;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<PaginatedResponse<TransactionDto>>> GetAll(
+        [FromQuery] string? type,
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate,
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25)
+    {
+        var filters = new TransactionFilterParams(type, startDate, endDate, search, page, pageSize);
+        var result = await _service.GetAllAsync(UserId, filters);
+        return Ok(result);
+    }
+
+    [HttpGet("{id:long}")]
+    public async Task<ActionResult<TransactionDto>> GetById(long id)
+    {
+        var result = await _service.GetByIdAsync(UserId, id);
+        return result == null ? NotFound() : Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<TransactionDto>> Create([FromBody] CreateTransactionRequest request)
+    {
+        var result = await _service.CreateAsync(UserId, request);
+        return Ok(result);
+    }
+
+    [HttpPut("{id:long}")]
+    public async Task<ActionResult<TransactionDto>> Update(long id, [FromBody] UpdateTransactionRequest request)
+    {
+        var result = await _service.UpdateAsync(UserId, id, request);
+        return result == null ? NotFound() : Ok(result);
+    }
+
+    [HttpDelete("{id:long}")]
+    public async Task<IActionResult> Delete(long id)
+    {
+        var deleted = await _service.DeleteAsync(UserId, id);
+        return deleted ? NoContent() : NotFound();
+    }
+}
