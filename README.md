@@ -40,10 +40,12 @@ Then set each required secret:
 |---|---|
 | `Jwt:Secret` | Long random string used to sign JWT tokens (≥ 32 chars) |
 | `ExchangeRateApi:ApiKey` | API key from [exchangerate-api.com](https://www.exchangerate-api.com) (free tier works) |
+| `OpenAi:ApiKey` | API key from [platform.openai.com](https://platform.openai.com) (used for AI email parsing) |
 
 ```bash
 dotnet user-secrets set "Jwt:Secret" "<your-jwt-secret>"
 dotnet user-secrets set "ExchangeRateApi:ApiKey" "<your-api-key>"
+dotnet user-secrets set "OpenAi:ApiKey" "<your-openai-api-key>"
 ```
 
 #### Exchange Rate Sync

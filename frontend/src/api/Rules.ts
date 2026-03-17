@@ -25,10 +25,10 @@ export class Rules<
    * No description
    *
    * @tags Rules
-   * @name RulesList
+   * @name RulesGetAll
    * @request GET:/api/Rules
    */
-  rulesList = (params: RequestParams = {}) =>
+  rulesGetAll = (params: RequestParams = {}) =>
     this.request<CategoryRuleDto[], any>({
       path: `/api/Rules`,
       method: "GET",
@@ -55,10 +55,10 @@ export class Rules<
    * No description
    *
    * @tags Rules
-   * @name RulesDetail
+   * @name RulesGetById
    * @request GET:/api/Rules/{id}
    */
-  rulesDetail = (id: number | string, params: RequestParams = {}) =>
+  rulesGetById = (id: number, params: RequestParams = {}) =>
     this.request<CategoryRuleDto, any>({
       path: `/api/Rules/${id}`,
       method: "GET",
@@ -73,7 +73,7 @@ export class Rules<
    * @request PUT:/api/Rules/{id}
    */
   rulesUpdate = (
-    id: number | string,
+    id: number,
     data: UpdateCategoryRuleRequest,
     params: RequestParams = {},
   ) =>
@@ -92,8 +92,8 @@ export class Rules<
    * @name RulesDelete
    * @request DELETE:/api/Rules/{id}
    */
-  rulesDelete = (id: number | string, params: RequestParams = {}) =>
-    this.request<void, any>({
+  rulesDelete = (id: number, params: RequestParams = {}) =>
+    this.request<Blob, any>({
       path: `/api/Rules/${id}`,
       method: "DELETE",
       ...params,
@@ -102,10 +102,10 @@ export class Rules<
    * No description
    *
    * @tags Rules
-   * @name RulesMatchList
+   * @name RulesMatch
    * @request GET:/api/Rules/match
    */
-  rulesMatchList = (
+  rulesMatch = (
     query?: {
       description?: string;
     },
@@ -122,14 +122,11 @@ export class Rules<
    * No description
    *
    * @tags Rules
-   * @name RulesByCategoryDelete
+   * @name RulesDeleteByCategoryId
    * @request DELETE:/api/Rules/by-category/{categoryId}
    */
-  rulesByCategoryDelete = (
-    categoryId: number | string,
-    params: RequestParams = {},
-  ) =>
-    this.request<void, any>({
+  rulesDeleteByCategoryId = (categoryId: number, params: RequestParams = {}) =>
+    this.request<Blob, any>({
       path: `/api/Rules/by-category/${categoryId}`,
       method: "DELETE",
       ...params,

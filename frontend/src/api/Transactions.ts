@@ -13,6 +13,7 @@
 import type {
   CreateTransactionRequest,
   PaginatedResponseOfTransactionDto,
+  TransactionBalanceDto,
   TransactionDto,
   UpdateTransactionRequest,
 } from "./data-contracts";
@@ -25,29 +26,28 @@ export class Transactions<
    * No description
    *
    * @tags Transactions
-   * @name TransactionsList
+   * @name TransactionsGetAll
    * @request GET:/api/Transactions
    */
-  transactionsList = (
+  transactionsGetAll = (
     query?: {
-      type?: string;
+      type?: string | null;
       /** @format date-time */
-      startDate?: string;
+      startDate?: string | null;
       /** @format date-time */
-      endDate?: string;
-      search?: string;
+      endDate?: string | null;
+      search?: string | null;
+      targetCurrency?: string | null;
       /**
        * @format int32
        * @default 1
-       * @pattern ^-?(?:0|[1-9]\d*)$
        */
-      page?: number | string;
+      page?: number;
       /**
        * @format int32
        * @default 25
-       * @pattern ^-?(?:0|[1-9]\d*)$
        */
-      pageSize?: number | string;
+      pageSize?: number;
     },
     params: RequestParams = {},
   ) =>
@@ -81,10 +81,37 @@ export class Transactions<
    * No description
    *
    * @tags Transactions
-   * @name TransactionsDetail
+   * @name TransactionsGetBalance
+   * @request GET:/api/Transactions/balance
+   */
+  transactionsGetBalance = (
+    query?: {
+      /** @default "USD" */
+      targetCurrency?: string;
+      type?: string | null;
+      /** @format date-time */
+      startDate?: string | null;
+      /** @format date-time */
+      endDate?: string | null;
+      search?: string | null;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<TransactionBalanceDto, any>({
+      path: `/api/Transactions/balance`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Transactions
+   * @name TransactionsGetById
    * @request GET:/api/Transactions/{id}
    */
-  transactionsDetail = (id: number | string, params: RequestParams = {}) =>
+  transactionsGetById = (id: number, params: RequestParams = {}) =>
     this.request<TransactionDto, any>({
       path: `/api/Transactions/${id}`,
       method: "GET",
@@ -99,7 +126,7 @@ export class Transactions<
    * @request PUT:/api/Transactions/{id}
    */
   transactionsUpdate = (
-    id: number | string,
+    id: number,
     data: UpdateTransactionRequest,
     params: RequestParams = {},
   ) =>
@@ -118,8 +145,8 @@ export class Transactions<
    * @name TransactionsDelete
    * @request DELETE:/api/Transactions/{id}
    */
-  transactionsDelete = (id: number | string, params: RequestParams = {}) =>
-    this.request<void, any>({
+  transactionsDelete = (id: number, params: RequestParams = {}) =>
+    this.request<Blob, any>({
       path: `/api/Transactions/${id}`,
       method: "DELETE",
       ...params,

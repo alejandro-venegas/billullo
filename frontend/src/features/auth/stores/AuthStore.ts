@@ -47,7 +47,7 @@ export class AuthStore {
     this.error = null;
 
     try {
-      const data = await authApi.authLoginCreate({ email, password });
+      const data = await authApi.authLogin({ email, password });
       setTokens(data.token, data.refreshToken);
 
       runInAction(() => {
@@ -71,7 +71,7 @@ export class AuthStore {
     this.error = null;
 
     try {
-      const data = await authApi.authRegisterCreate({ email, password });
+      const data = await authApi.authRegister({ email, password });
       setTokens(data.token, data.refreshToken);
 
       runInAction(() => {
@@ -94,7 +94,7 @@ export class AuthStore {
     const rt = getRefreshToken();
     if (rt) {
       try {
-        await authApi.authLogoutCreate({ refreshToken: rt });
+        await authApi.authLogout({ refreshToken: rt });
       } catch {
         // Ignore errors on logout
       }
@@ -109,7 +109,7 @@ export class AuthStore {
 
   private async refreshSession(refreshToken: string) {
     try {
-      const data = await authApi.authRefreshCreate({ refreshToken });
+      const data = await authApi.authRefresh({ refreshToken });
       setTokens(data.token, data.refreshToken);
 
       runInAction(() => {

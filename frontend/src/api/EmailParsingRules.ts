@@ -26,10 +26,10 @@ export class EmailParsingRules<
    * No description
    *
    * @tags EmailParsingRules
-   * @name EmailParsingRulesList
+   * @name EmailParsingRulesGetAll
    * @request GET:/api/EmailParsingRules
    */
-  emailParsingRulesList = (params: RequestParams = {}) =>
+  emailParsingRulesGetAll = (params: RequestParams = {}) =>
     this.request<EmailParsingRuleDto[], any>({
       path: `/api/EmailParsingRules`,
       method: "GET",
@@ -59,10 +59,10 @@ export class EmailParsingRules<
    * No description
    *
    * @tags EmailParsingRules
-   * @name EmailParsingRulesDetail
+   * @name EmailParsingRulesGetById
    * @request GET:/api/EmailParsingRules/{id}
    */
-  emailParsingRulesDetail = (id: number | string, params: RequestParams = {}) =>
+  emailParsingRulesGetById = (id: number, params: RequestParams = {}) =>
     this.request<EmailParsingRuleDto, any>({
       path: `/api/EmailParsingRules/${id}`,
       method: "GET",
@@ -77,7 +77,7 @@ export class EmailParsingRules<
    * @request PUT:/api/EmailParsingRules/{id}
    */
   emailParsingRulesUpdate = (
-    id: number | string,
+    id: number,
     data: UpdateEmailParsingRuleRequest,
     params: RequestParams = {},
   ) =>
@@ -96,8 +96,8 @@ export class EmailParsingRules<
    * @name EmailParsingRulesDelete
    * @request DELETE:/api/EmailParsingRules/{id}
    */
-  emailParsingRulesDelete = (id: number | string, params: RequestParams = {}) =>
-    this.request<void, any>({
+  emailParsingRulesDelete = (id: number, params: RequestParams = {}) =>
+    this.request<Blob, any>({
       path: `/api/EmailParsingRules/${id}`,
       method: "DELETE",
       ...params,
@@ -106,10 +106,10 @@ export class EmailParsingRules<
    * No description
    *
    * @tags EmailParsingRules
-   * @name EmailParsingRulesTestCreate
+   * @name EmailParsingRulesTestRule
    * @request POST:/api/EmailParsingRules/test
    */
-  emailParsingRulesTestCreate = (
+  emailParsingRulesTestRule = (
     data: TestEmailParsingRuleRequest,
     params: RequestParams = {},
   ) =>

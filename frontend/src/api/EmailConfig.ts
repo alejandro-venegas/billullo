@@ -14,6 +14,7 @@ import type {
   EmailConfigDto,
   TestConnectionResult,
   TestEmailConfigRequest,
+  TestScrapeResult,
   UpsertEmailConfigRequest,
 } from "./data-contracts";
 import { ContentType, HttpClient, type RequestParams } from "./http-client";
@@ -25,10 +26,10 @@ export class EmailConfig<
    * No description
    *
    * @tags EmailConfig
-   * @name EmailConfigList
+   * @name EmailConfigGet
    * @request GET:/api/EmailConfig
    */
-  emailConfigList = (params: RequestParams = {}) =>
+  emailConfigGet = (params: RequestParams = {}) =>
     this.request<EmailConfigDto, any>({
       path: `/api/EmailConfig`,
       method: "GET",
@@ -39,10 +40,10 @@ export class EmailConfig<
    * No description
    *
    * @tags EmailConfig
-   * @name EmailConfigUpdate
+   * @name EmailConfigUpsert
    * @request PUT:/api/EmailConfig
    */
-  emailConfigUpdate = (
+  emailConfigUpsert = (
     data: UpsertEmailConfigRequest,
     params: RequestParams = {},
   ) =>
@@ -62,7 +63,7 @@ export class EmailConfig<
    * @request DELETE:/api/EmailConfig
    */
   emailConfigDelete = (params: RequestParams = {}) =>
-    this.request<void, any>({
+    this.request<Blob, any>({
       path: `/api/EmailConfig`,
       method: "DELETE",
       ...params,
@@ -71,10 +72,10 @@ export class EmailConfig<
    * No description
    *
    * @tags EmailConfig
-   * @name EmailConfigTestCreate
+   * @name EmailConfigTestConnection
    * @request POST:/api/EmailConfig/test
    */
-  emailConfigTestCreate = (
+  emailConfigTestConnection = (
     data: TestEmailConfigRequest,
     params: RequestParams = {},
   ) =>
@@ -83,6 +84,20 @@ export class EmailConfig<
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags EmailConfig
+   * @name EmailConfigTestScrape
+   * @request POST:/api/EmailConfig/test-scrape
+   */
+  emailConfigTestScrape = (params: RequestParams = {}) =>
+    this.request<TestScrapeResult, any>({
+      path: `/api/EmailConfig/test-scrape`,
+      method: "POST",
       format: "json",
       ...params,
     });

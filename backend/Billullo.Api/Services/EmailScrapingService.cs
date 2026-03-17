@@ -353,7 +353,7 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
     {
         var sender = message.From.Mailboxes.FirstOrDefault()?.Address ?? string.Empty;
         var subject = message.Subject ?? string.Empty;
-        var body = message.TextBody ?? string.Empty;
+        var body = message.TextBody ?? message.HtmlBody ?? string.Empty;
 
         foreach (var rule in parsingRules)
         {
@@ -376,31 +376,24 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
                 }
             }
 
-            // Rule matched — parse the email
-            var result = parser.ParseEmail(
-                body,
-                rule.AmountRegex,
-                rule.DateRegex,
-                rule.DateFormat,
-                rule.CurrencyFixed?.ToString(),
-                rule.CurrencyRegex,
-                rule.DescriptionFixed,
-                rule.DescriptionRegex,
-                fallbackDate: message.Date.UtcDateTime
-            );
+            // Rule matched — parse the email with AI
+            var result = await parser.ParseEmailAsync(body, fallbackDate: message.Date.UtcDateTime);
 
             if (!result.Matched || !result.Amount.HasValue || !result.Date.HasValue) continue;
 
-            // Parse currency
+            // Apply rule-level overrides, then parse currency
+            var currencyStr = rule.CurrencyFixed?.ToString() ?? result.Currency;
             var currency = Currency.USD;
-            if (!string.IsNullOrEmpty(result.Currency) && Enum.TryParse<Currency>(result.Currency, true, out var parsedCurrency))
+            if (!string.IsNullOrEmpty(currencyStr) && Enum.TryParse<Currency>(currencyStr, true, out var parsedCurrency))
                 currency = parsedCurrency;
+
+            var description = rule.DescriptionFixed ?? result.Description ?? subject;
 
             var transaction = new Transaction
             {
                 UserId = userId,
                 Date = result.Date.Value,
-                Description = result.Description ?? subject,
+                Description = description,
                 CategoryId = rule.CategoryId,
                 Amount = result.Amount.Value,
                 Currency = currency,

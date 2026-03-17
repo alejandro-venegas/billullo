@@ -1,12 +1,14 @@
 {
-  "openapi": "3.1.1",
+  "x-generator": "NSwag v14.6.3.0 (NJsonSchema v11.5.2.0 (Newtonsoft.Json v13.0.0.0))",
+  "openapi": "3.0.0",
   "info": {
-    "title": "Billullo.Api | v1",
-    "version": "1.0.0"
+    "title": "Billullo API",
+    "description": "Personal finance app with email-based transaction scraping.",
+    "version": "v1"
   },
   "servers": [
     {
-      "url": "http://localhost:5000/"
+      "url": "http://localhost:5145"
     }
   ],
   "paths": {
@@ -15,41 +17,24 @@
         "tags": [
           "Auth"
         ],
+        "operationId": "Auth_Register",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RegisterRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthResponse"
                 }
@@ -64,41 +49,24 @@
         "tags": [
           "Auth"
         ],
+        "operationId": "Auth_Login",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/LoginRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthResponse"
                 }
@@ -113,41 +81,24 @@
         "tags": [
           "Auth"
         ],
+        "operationId": "Auth_Refresh",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RefreshRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthResponse"
                 }
@@ -162,29 +113,80 @@
         "tags": [
           "Auth"
         ],
+        "operationId": "Auth_Logout",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RefreshRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Auth/preferences": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Auth_GetPreferences",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Auth_UpdatePreferences",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
           }
         }
       }
@@ -194,27 +196,12 @@
         "tags": [
           "Categories"
         ],
+        "operationId": "Categories_GetAll",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CategoryDto"
-                  }
-                }
-              },
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CategoryDto"
-                  }
-                }
-              },
-              "text/json": {
                 "schema": {
                   "type": "array",
                   "items": {
@@ -230,41 +217,24 @@
         "tags": [
           "Categories"
         ],
+        "operationId": "Categories_Create",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateCategoryRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCategoryRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCategoryRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CategoryDto"
                 }
@@ -279,36 +249,24 @@
         "tags": [
           "Categories"
         ],
+        "operationId": "Categories_GetById",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CategoryDto"
                 }
@@ -321,56 +279,36 @@
         "tags": [
           "Categories"
         ],
+        "operationId": "Categories_Update",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateCategoryRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCategoryRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCategoryRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 2
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CategoryDto"
                 }
@@ -383,24 +321,30 @@
         "tags": [
           "Categories"
         ],
+        "operationId": "Categories_Delete",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           }
         }
       }
@@ -410,21 +354,12 @@
         "tags": [
           "EmailConfig"
         ],
+        "operationId": "EmailConfig_Get",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailConfigDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailConfigDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EmailConfigDto"
                 }
@@ -437,41 +372,24 @@
         "tags": [
           "EmailConfig"
         ],
+        "operationId": "EmailConfig_Upsert",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpsertEmailConfigRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpsertEmailConfigRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpsertEmailConfigRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailConfigDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailConfigDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EmailConfigDto"
                 }
@@ -484,9 +402,18 @@
         "tags": [
           "EmailConfig"
         ],
+        "operationId": "EmailConfig_Delete",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           }
         }
       }
@@ -496,43 +423,46 @@
         "tags": [
           "EmailConfig"
         ],
+        "operationId": "EmailConfig_TestConnection",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/TestEmailConfigRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TestEmailConfigRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TestEmailConfigRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TestConnectionResult"
-                }
-              },
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TestConnectionResult"
                 }
-              },
-              "text/json": {
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailConfig/test-scrape": {
+      "post": {
+        "tags": [
+          "EmailConfig"
+        ],
+        "operationId": "EmailConfig_TestScrape",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TestConnectionResult"
+                  "$ref": "#/components/schemas/TestScrapeResult"
                 }
               }
             }
@@ -545,27 +475,12 @@
         "tags": [
           "EmailParsingRules"
         ],
+        "operationId": "EmailParsingRules_GetAll",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EmailParsingRuleDto"
-                  }
-                }
-              },
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EmailParsingRuleDto"
-                  }
-                }
-              },
-              "text/json": {
                 "schema": {
                   "type": "array",
                   "items": {
@@ -581,41 +496,24 @@
         "tags": [
           "EmailParsingRules"
         ],
+        "operationId": "EmailParsingRules_Create",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateEmailParsingRuleRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateEmailParsingRuleRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateEmailParsingRuleRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailParsingRuleDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailParsingRuleDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EmailParsingRuleDto"
                 }
@@ -630,36 +528,24 @@
         "tags": [
           "EmailParsingRules"
         ],
+        "operationId": "EmailParsingRules_GetById",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailParsingRuleDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailParsingRuleDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EmailParsingRuleDto"
                 }
@@ -672,56 +558,36 @@
         "tags": [
           "EmailParsingRules"
         ],
+        "operationId": "EmailParsingRules_Update",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateEmailParsingRuleRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateEmailParsingRuleRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateEmailParsingRuleRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 2
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailParsingRuleDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailParsingRuleDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EmailParsingRuleDto"
                 }
@@ -734,24 +600,30 @@
         "tags": [
           "EmailParsingRules"
         ],
+        "operationId": "EmailParsingRules_Delete",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           }
         }
       }
@@ -761,41 +633,24 @@
         "tags": [
           "EmailParsingRules"
         ],
+        "operationId": "EmailParsingRules_TestRule",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/TestEmailParsingRuleRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TestEmailParsingRuleRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TestEmailParsingRuleRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TestEmailParsingResult"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TestEmailParsingResult"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TestEmailParsingResult"
                 }
@@ -810,27 +665,12 @@
         "tags": [
           "Rules"
         ],
+        "operationId": "Rules_GetAll",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CategoryRuleDto"
-                  }
-                }
-              },
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CategoryRuleDto"
-                  }
-                }
-              },
-              "text/json": {
                 "schema": {
                   "type": "array",
                   "items": {
@@ -846,41 +686,24 @@
         "tags": [
           "Rules"
         ],
+        "operationId": "Rules_Create",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateCategoryRuleRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCategoryRuleRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCategoryRuleRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryRuleDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryRuleDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CategoryRuleDto"
                 }
@@ -895,36 +718,24 @@
         "tags": [
           "Rules"
         ],
+        "operationId": "Rules_GetById",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryRuleDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryRuleDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CategoryRuleDto"
                 }
@@ -937,56 +748,36 @@
         "tags": [
           "Rules"
         ],
+        "operationId": "Rules_Update",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateCategoryRuleRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCategoryRuleRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCategoryRuleRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 2
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryRuleDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryRuleDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CategoryRuleDto"
                 }
@@ -999,24 +790,30 @@
         "tags": [
           "Rules"
         ],
+        "operationId": "Rules_Delete",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           }
         }
       }
@@ -1026,30 +823,22 @@
         "tags": [
           "Rules"
         ],
+        "operationId": "Rules_Match",
         "parameters": [
           {
             "name": "description",
             "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/RuleMatchResult"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RuleMatchResult"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RuleMatchResult"
                 }
@@ -1064,24 +853,30 @@
         "tags": [
           "Rules"
         ],
+        "operationId": "Rules_DeleteByCategoryId",
         "parameters": [
           {
             "name": "categoryId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           }
         }
       }
@@ -1091,79 +886,81 @@
         "tags": [
           "Transactions"
         ],
+        "operationId": "Transactions_GetAll",
         "parameters": [
           {
             "name": "type",
             "in": "query",
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
           },
           {
             "name": "startDate",
             "in": "query",
             "schema": {
               "type": "string",
-              "format": "date-time"
-            }
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 2
           },
           {
             "name": "endDate",
             "in": "query",
             "schema": {
               "type": "string",
-              "format": "date-time"
-            }
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 3
           },
           {
             "name": "search",
             "in": "query",
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "targetCurrency",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 5
           },
           {
             "name": "page",
             "in": "query",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32",
               "default": 1
-            }
+            },
+            "x-position": 6
           },
           {
             "name": "pageSize",
             "in": "query",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32",
               "default": 25
-            }
+            },
+            "x-position": 7
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponseOfTransactionDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponseOfTransactionDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PaginatedResponseOfTransactionDto"
                 }
@@ -1176,43 +973,95 @@
         "tags": [
           "Transactions"
         ],
+        "operationId": "Transactions_Create",
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateTransactionRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTransactionRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTransactionRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 1
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDto"
-                }
-              },
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TransactionDto"
                 }
-              },
-              "text/json": {
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Transactions/balance": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "operationId": "Transactions_GetBalance",
+        "parameters": [
+          {
+            "name": "targetCurrency",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "USD"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 5
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TransactionDto"
+                  "$ref": "#/components/schemas/TransactionBalanceDto"
                 }
               }
             }
@@ -1225,36 +1074,24 @@
         "tags": [
           "Transactions"
         ],
+        "operationId": "Transactions_GetById",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TransactionDto"
                 }
@@ -1267,56 +1104,36 @@
         "tags": [
           "Transactions"
         ],
+        "operationId": "Transactions_Update",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "requestBody": {
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateTransactionRequest"
               }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTransactionRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTransactionRequest"
-              }
             }
           },
-          "required": true
+          "required": true,
+          "x-position": 2
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDto"
-                }
-              },
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDto"
-                }
-              },
-              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TransactionDto"
                 }
@@ -1329,24 +1146,30 @@
         "tags": [
           "Transactions"
         ],
+        "operationId": "Transactions_Delete",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64",
-              "pattern": "^-?(?:0|[1-9]\\d*)$"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-position": 1
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           }
         }
       }
@@ -1355,13 +1178,8 @@
   "components": {
     "schemas": {
       "AuthResponse": {
-        "required": [
-          "token",
-          "refreshToken",
-          "expiresAt",
-          "user"
-        ],
         "type": "object",
+        "additionalProperties": false,
         "properties": {
           "token": {
             "type": "string"
@@ -1378,271 +1196,137 @@
           }
         }
       },
-      "CategoryDto": {
-        "required": [
-          "id",
-          "name",
-          "ruleCount",
-          "transactionCount"
-        ],
+      "UserDto": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
           "id": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "preferredCurrency": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdatePreferencesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "preferredCurrency": {
+            "type": "string"
+          }
+        }
+      },
+      "CategoryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
           },
           "name": {
             "type": "string"
           },
+          "parentCategoryId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
           "ruleCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "transactionCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
-          }
-        }
-      },
-      "CategoryRuleDto": {
-        "required": [
-          "id",
-          "pattern",
-          "categoryId",
-          "categoryName"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
-          },
-          "pattern": {
-            "type": "string"
-          },
-          "categoryId": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
-          },
-          "categoryName": {
-            "type": [
-              "null",
-              "string"
-            ]
           }
         }
       },
       "CreateCategoryRequest": {
-        "required": [
-          "name"
-        ],
         "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateCategoryRuleRequest": {
-        "required": [
-          "pattern",
-          "categoryId"
-        ],
-        "type": "object",
-        "properties": {
-          "pattern": {
-            "type": "string"
-          },
-          "categoryId": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
-          }
-        }
-      },
-      "CreateEmailParsingRuleRequest": {
-        "required": [
-          "name",
-          "senderAddress",
-          "subjectPattern",
-          "amountRegex",
-          "dateRegex",
-          "dateFormat",
-          "currencyFixed",
-          "currencyRegex",
-          "descriptionFixed",
-          "descriptionRegex",
-          "transactionType",
-          "categoryId"
-        ],
-        "type": "object",
+        "additionalProperties": false,
         "properties": {
           "name": {
             "type": "string"
           },
-          "senderAddress": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "subjectPattern": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "amountRegex": {
-            "type": "string"
-          },
-          "dateRegex": {
-            "type": "string"
-          },
-          "dateFormat": {
-            "type": "string"
-          },
-          "currencyFixed": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "currencyRegex": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "descriptionFixed": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "descriptionRegex": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "transactionType": {
-            "type": "string"
-          },
-          "categoryId": {
-            "type": [
-              "integer",
-              "null",
-              "string"
-            ],
+          "parentCategoryId": {
+            "type": "integer",
             "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+            "nullable": true
           },
-          "priority": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32",
-            "default": 0
-          }
-        }
-      },
-      "CreateTransactionRequest": {
-        "required": [
-          "date",
-          "description",
-          "categoryId",
-          "amount",
-          "currency",
-          "type"
-        ],
-        "type": "object",
-        "properties": {
-          "date": {
+          "color": {
             "type": "string",
-            "format": "date-time"
-          },
-          "description": {
+            "nullable": true
+          }
+        }
+      },
+      "UpdateCategoryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
             "type": "string"
           },
-          "categoryId": {
-            "type": [
-              "integer",
-              "null",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
-          },
-          "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
-            "format": "double"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
+          "color": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
       "EmailConfigDto": {
-        "required": [
-          "id",
-          "imapHost",
-          "imapPort",
-          "emailAddress",
-          "hasPassword",
-          "useSsl",
-          "enabled"
-        ],
         "type": "object",
+        "additionalProperties": false,
         "properties": {
           "id": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+            "type": "integer",
+            "format": "int64"
           },
           "imapHost": {
             "type": "string"
           },
           "imapPort": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "emailAddress": {
@@ -1659,224 +1343,343 @@
           }
         }
       },
-      "EmailParsingRuleDto": {
-        "required": [
-          "id",
-          "name",
-          "senderAddress",
-          "subjectPattern",
-          "amountRegex",
-          "dateRegex",
-          "dateFormat",
-          "currencyFixed",
-          "currencyRegex",
-          "descriptionFixed",
-          "descriptionRegex",
-          "transactionType",
-          "categoryId",
-          "categoryName",
-          "priority"
-        ],
+      "UpsertEmailConfigRequest": {
         "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "imapHost": {
+            "type": "string"
+          },
+          "imapPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emailAddress": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "useSsl": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TestConnectionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TestEmailConfigRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "imapHost": {
+            "type": "string"
+          },
+          "imapPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emailAddress": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "useSsl": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TestScrapeResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "emails": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ScrapedEmail"
+            }
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ScrapedEmail": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "uid": {
+            "type": "integer"
+          },
+          "from": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "bodyPreview": {
+            "type": "string"
+          },
+          "parsedTransaction": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ParsedTransactionPreview"
+              }
+            ]
+          },
+          "matchLog": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ParsedTransactionPreview": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "matchedRuleName": {
+            "type": "string"
+          }
+        }
+      },
+      "EmailParsingRuleDto": {
+        "type": "object",
+        "additionalProperties": false,
         "properties": {
           "id": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+            "type": "integer",
+            "format": "int64"
           },
           "name": {
             "type": "string"
           },
           "senderAddress": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "subjectPattern": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "amountRegex": {
-            "type": "string"
-          },
-          "dateRegex": {
-            "type": "string"
-          },
-          "dateFormat": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "currencyFixed": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "currencyRegex": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "descriptionFixed": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "descriptionRegex": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "transactionType": {
             "type": "string"
           },
           "categoryId": {
-            "type": [
-              "integer",
-              "null",
-              "string"
-            ],
+            "type": "integer",
             "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+            "nullable": true
           },
           "categoryName": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "priority": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         }
       },
-      "LoginRequest": {
-        "required": [
-          "email",
-          "password"
-        ],
+      "CreateEmailParsingRuleRequest": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
-          "email": {
+          "name": {
             "type": "string"
           },
-          "password": {
+          "senderAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjectPattern": {
+            "type": "string",
+            "nullable": true
+          },
+          "currencyFixed": {
+            "type": "string",
+            "nullable": true
+          },
+          "descriptionFixed": {
+            "type": "string",
+            "nullable": true
+          },
+          "transactionType": {
             "type": "string"
-          }
-        }
-      },
-      "PaginatedResponseOfTransactionDto": {
-        "required": [
-          "items",
-          "totalCount",
-          "page",
-          "pageSize",
-          "totalPages"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TransactionDto"
-            }
           },
-          "totalCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
+          "categoryId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
           },
-          "page": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "pageSize": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "totalPages": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+          "priority": {
+            "type": "integer",
             "format": "int32"
           }
         }
       },
-      "RefreshRequest": {
-        "required": [
-          "refreshToken"
-        ],
+      "UpdateEmailParsingRuleRequest": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
-          "refreshToken": {
+          "name": {
+            "type": "string"
+          },
+          "senderAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjectPattern": {
+            "type": "string",
+            "nullable": true
+          },
+          "currencyFixed": {
+            "type": "string",
+            "nullable": true
+          },
+          "descriptionFixed": {
+            "type": "string",
+            "nullable": true
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TestEmailParsingResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "matched": {
+            "type": "boolean"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TestEmailParsingRuleRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "emailBody": {
             "type": "string"
           }
         }
       },
-      "RegisterRequest": {
-        "required": [
-          "email",
-          "password"
-        ],
+      "CategoryRuleDto": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
-          "email": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pattern": {
             "type": "string"
           },
-          "password": {
-            "type": "string"
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
       "RuleMatchResult": {
-        "required": [
-          "categoryId",
-          "categoryName",
-          "conflicts",
-          "matches"
-        ],
         "type": "object",
+        "additionalProperties": false,
         "properties": {
           "categoryId": {
-            "type": [
-              "integer",
-              "null",
-              "string"
-            ],
+            "type": "integer",
             "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+            "nullable": true
           },
           "categoryName": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "conflicts": {
             "type": "boolean"
@@ -1889,188 +1692,67 @@
           }
         }
       },
-      "TestConnectionResult": {
-        "required": [
-          "success",
-          "error"
-        ],
+      "CreateCategoryRuleRequest": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
-          "success": {
-            "type": "boolean"
+          "pattern": {
+            "type": "string"
           },
-          "error": {
-            "type": [
-              "null",
-              "string"
-            ]
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
-      "TestEmailConfigRequest": {
-        "required": [
-          "imapHost",
-          "imapPort",
-          "emailAddress",
-          "password"
-        ],
+      "UpdateCategoryRuleRequest": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
-          "imapHost": {
+          "pattern": {
             "type": "string"
           },
-          "imapPort": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PaginatedResponseOfTransactionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionDto"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
             "format": "int32"
           },
-          "emailAddress": {
-            "type": "string"
+          "page": {
+            "type": "integer",
+            "format": "int32"
           },
-          "password": {
-            "type": "string"
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
           },
-          "useSsl": {
-            "type": "boolean",
-            "default": true
-          }
-        }
-      },
-      "TestEmailParsingResult": {
-        "required": [
-          "matched",
-          "amount",
-          "date",
-          "currency",
-          "description",
-          "error"
-        ],
-        "type": "object",
-        "properties": {
-          "matched": {
-            "type": "boolean"
-          },
-          "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "null",
-              "number",
-              "string"
-            ],
-            "format": "double"
-          },
-          "date": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          },
-          "currency": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "description": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "error": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
-      "TestEmailParsingRuleRequest": {
-        "required": [
-          "emailBody",
-          "emailSubject",
-          "senderAddress",
-          "amountRegex",
-          "dateRegex",
-          "dateFormat",
-          "currencyFixed",
-          "currencyRegex",
-          "descriptionFixed",
-          "descriptionRegex"
-        ],
-        "type": "object",
-        "properties": {
-          "emailBody": {
-            "type": "string"
-          },
-          "emailSubject": {
-            "type": "string"
-          },
-          "senderAddress": {
-            "type": "string"
-          },
-          "amountRegex": {
-            "type": "string"
-          },
-          "dateRegex": {
-            "type": "string"
-          },
-          "dateFormat": {
-            "type": "string"
-          },
-          "currencyFixed": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "currencyRegex": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "descriptionFixed": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "descriptionRegex": {
-            "type": [
-              "null",
-              "string"
-            ]
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
       "TransactionDto": {
-        "required": [
-          "id",
-          "date",
-          "description",
-          "categoryId",
-          "categoryName",
-          "amount",
-          "currency",
-          "type",
-          "source",
-          "createdAt",
-          "updatedAt"
-        ],
         "type": "object",
+        "additionalProperties": false,
         "properties": {
           "id": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+            "type": "integer",
+            "format": "int64"
           },
           "date": {
             "type": "string",
@@ -2080,27 +1762,17 @@
             "type": "string"
           },
           "categoryId": {
-            "type": [
-              "integer",
-              "null",
-              "string"
-            ],
+            "type": "integer",
             "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+            "nullable": true
           },
           "categoryName": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
-            "format": "double"
+            "type": "number",
+            "format": "decimal"
           },
           "currency": {
             "type": "string"
@@ -2118,138 +1790,53 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "convertedAmount": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "targetCurrency": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
-      "UpdateCategoryRequest": {
-        "required": [
-          "name"
-        ],
+      "TransactionBalanceDto": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
-          "name": {
+          "total": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "targetCurrency": {
             "type": "string"
+          },
+          "breakdown": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CurrencyBalance"
+            }
           }
         }
       },
-      "UpdateCategoryRuleRequest": {
-        "required": [
-          "pattern",
-          "categoryId"
-        ],
+      "CurrencyBalance": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
-          "pattern": {
+          "currency": {
             "type": "string"
           },
-          "categoryId": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+          "originalAmount": {
+            "type": "number",
+            "format": "decimal"
           }
         }
       },
-      "UpdateEmailParsingRuleRequest": {
-        "required": [
-          "name",
-          "senderAddress",
-          "subjectPattern",
-          "amountRegex",
-          "dateRegex",
-          "dateFormat",
-          "currencyFixed",
-          "currencyRegex",
-          "descriptionFixed",
-          "descriptionRegex",
-          "transactionType",
-          "categoryId"
-        ],
+      "CreateTransactionRequest": {
         "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "senderAddress": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "subjectPattern": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "amountRegex": {
-            "type": "string"
-          },
-          "dateRegex": {
-            "type": "string"
-          },
-          "dateFormat": {
-            "type": "string"
-          },
-          "currencyFixed": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "currencyRegex": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "descriptionFixed": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "descriptionRegex": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "transactionType": {
-            "type": "string"
-          },
-          "categoryId": {
-            "type": [
-              "integer",
-              "null",
-              "string"
-            ],
-            "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
-          },
-          "priority": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32",
-            "default": 0
-          }
-        }
-      },
-      "UpdateTransactionRequest": {
-        "required": [
-          "date",
-          "description",
-          "categoryId",
-          "amount",
-          "currency",
-          "type"
-        ],
-        "type": "object",
+        "additionalProperties": false,
         "properties": {
           "date": {
             "type": "string",
@@ -2259,21 +1846,13 @@
             "type": "string"
           },
           "categoryId": {
-            "type": [
-              "integer",
-              "null",
-              "string"
-            ],
+            "type": "integer",
             "format": "int64",
-            "pattern": "^-?(?:0|[1-9]\\d*)$"
+            "nullable": true
           },
           "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
-            "format": "double"
+            "type": "number",
+            "format": "decimal"
           },
           "currency": {
             "type": "string"
@@ -2283,80 +1862,34 @@
           }
         }
       },
-      "UpsertEmailConfigRequest": {
-        "required": [
-          "imapHost",
-          "imapPort",
-          "emailAddress",
-          "password"
-        ],
+      "UpdateTransactionRequest": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
-          "imapHost": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
             "type": "string"
           },
-          "imapPort": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
+          "categoryId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
           },
-          "emailAddress": {
+          "amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "currency": {
             "type": "string"
           },
-          "password": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "useSsl": {
-            "type": "boolean",
-            "default": true
-          },
-          "enabled": {
-            "type": "boolean",
-            "default": false
-          }
-        }
-      },
-      "UserDto": {
-        "required": [
-          "id",
-          "email"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "email": {
+          "type": {
             "type": "string"
           }
         }
       }
     }
-  },
-  "tags": [
-    {
-      "name": "Auth"
-    },
-    {
-      "name": "Categories"
-    },
-    {
-      "name": "EmailConfig"
-    },
-    {
-      "name": "EmailParsingRules"
-    },
-    {
-      "name": "Rules"
-    },
-    {
-      "name": "Transactions"
-    }
-  ]
+  }
 }

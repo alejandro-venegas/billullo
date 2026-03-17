@@ -15,6 +15,8 @@ import type {
   LoginRequest,
   RefreshRequest,
   RegisterRequest,
+  UpdatePreferencesRequest,
+  UserDto,
 } from "./data-contracts";
 import { ContentType, HttpClient, type RequestParams } from "./http-client";
 
@@ -25,10 +27,10 @@ export class Auth<
    * No description
    *
    * @tags Auth
-   * @name AuthRegisterCreate
+   * @name AuthRegister
    * @request POST:/api/Auth/register
    */
-  authRegisterCreate = (data: RegisterRequest, params: RequestParams = {}) =>
+  authRegister = (data: RegisterRequest, params: RequestParams = {}) =>
     this.request<AuthResponse, any>({
       path: `/api/Auth/register`,
       method: "POST",
@@ -41,10 +43,10 @@ export class Auth<
    * No description
    *
    * @tags Auth
-   * @name AuthLoginCreate
+   * @name AuthLogin
    * @request POST:/api/Auth/login
    */
-  authLoginCreate = (data: LoginRequest, params: RequestParams = {}) =>
+  authLogin = (data: LoginRequest, params: RequestParams = {}) =>
     this.request<AuthResponse, any>({
       path: `/api/Auth/login`,
       method: "POST",
@@ -57,10 +59,10 @@ export class Auth<
    * No description
    *
    * @tags Auth
-   * @name AuthRefreshCreate
+   * @name AuthRefresh
    * @request POST:/api/Auth/refresh
    */
-  authRefreshCreate = (data: RefreshRequest, params: RequestParams = {}) =>
+  authRefresh = (data: RefreshRequest, params: RequestParams = {}) =>
     this.request<AuthResponse, any>({
       path: `/api/Auth/refresh`,
       method: "POST",
@@ -73,15 +75,48 @@ export class Auth<
    * No description
    *
    * @tags Auth
-   * @name AuthLogoutCreate
+   * @name AuthLogout
    * @request POST:/api/Auth/logout
    */
-  authLogoutCreate = (data: RefreshRequest, params: RequestParams = {}) =>
-    this.request<void, any>({
+  authLogout = (data: RefreshRequest, params: RequestParams = {}) =>
+    this.request<Blob, any>({
       path: `/api/Auth/logout`,
       method: "POST",
       body: data,
       type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthGetPreferences
+   * @request GET:/api/Auth/preferences
+   */
+  authGetPreferences = (params: RequestParams = {}) =>
+    this.request<UserDto, any>({
+      path: `/api/Auth/preferences`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthUpdatePreferences
+   * @request PATCH:/api/Auth/preferences
+   */
+  authUpdatePreferences = (
+    data: UpdatePreferencesRequest,
+    params: RequestParams = {},
+  ) =>
+    this.request<UserDto, any>({
+      path: `/api/Auth/preferences`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
       ...params,
     });
 }

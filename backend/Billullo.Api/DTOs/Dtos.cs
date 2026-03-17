@@ -29,7 +29,12 @@ public record UserDto
 {
     public string Id { get; init; } = default!;
     public string Email { get; init; } = default!;
+    public string PreferredCurrency { get; init; } = "USD";
 }
+
+public record UpdatePreferencesRequest(
+    [Required] string PreferredCurrency
+);
 
 // ── Transaction ──
 
@@ -46,6 +51,8 @@ public record TransactionDto
     public string Source { get; init; } = default!;
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
+    public decimal? ConvertedAmount { get; init; }
+    public string? TargetCurrency { get; init; }
 }
 
 public record CreateTransactionRequest(
@@ -81,6 +88,19 @@ public record PaginatedResponse<T>(
     int Page,
     int PageSize,
     int TotalPages
+);
+
+// ── Balance ──
+
+public record TransactionBalanceDto(
+    decimal Total,
+    string TargetCurrency,
+    IEnumerable<CurrencyBalance> Breakdown
+);
+
+public record CurrencyBalance(
+    string Currency,
+    decimal OriginalAmount
 );
 
 // ── Category ──
@@ -176,13 +196,8 @@ public record EmailParsingRuleDto
     public string Name { get; init; } = default!;
     public string? SenderAddress { get; init; }
     public string? SubjectPattern { get; init; }
-    public string AmountRegex { get; init; } = default!;
-    public string? DateRegex { get; init; }
-    public string? DateFormat { get; init; }
     public string? CurrencyFixed { get; init; }
-    public string? CurrencyRegex { get; init; }
     public string? DescriptionFixed { get; init; }
-    public string? DescriptionRegex { get; init; }
     public string TransactionType { get; init; } = default!;
     public long? CategoryId { get; init; }
     public string? CategoryName { get; init; }
@@ -193,13 +208,8 @@ public record CreateEmailParsingRuleRequest(
     [Required, MaxLength(200)] string Name,
     [MaxLength(255)] string? SenderAddress,
     [MaxLength(500)] string? SubjectPattern,
-    [Required, MaxLength(500)] string AmountRegex,
-    [MaxLength(500)] string? DateRegex,
-    [MaxLength(50)] string? DateFormat,
     string? CurrencyFixed,
-    [MaxLength(500)] string? CurrencyRegex,
     [MaxLength(500)] string? DescriptionFixed,
-    [MaxLength(500)] string? DescriptionRegex,
     [Required] string TransactionType,
     long? CategoryId,
     int Priority = 0
@@ -209,29 +219,15 @@ public record UpdateEmailParsingRuleRequest(
     [Required, MaxLength(200)] string Name,
     [MaxLength(255)] string? SenderAddress,
     [MaxLength(500)] string? SubjectPattern,
-    [Required, MaxLength(500)] string AmountRegex,
-    [MaxLength(500)] string? DateRegex,
-    [MaxLength(50)] string? DateFormat,
     string? CurrencyFixed,
-    [MaxLength(500)] string? CurrencyRegex,
     [MaxLength(500)] string? DescriptionFixed,
-    [MaxLength(500)] string? DescriptionRegex,
     [Required] string TransactionType,
     long? CategoryId,
     int Priority = 0
 );
 
 public record TestEmailParsingRuleRequest(
-    [Required] string EmailBody,
-    [Required] string EmailSubject,
-    [Required] string SenderAddress,
-    [Required, MaxLength(500)] string AmountRegex,
-    [MaxLength(500)] string? DateRegex,
-    [MaxLength(50)] string? DateFormat,
-    string? CurrencyFixed,
-    string? CurrencyRegex,
-    string? DescriptionFixed,
-    string? DescriptionRegex
+    [Required] string EmailBody
 );
 
 public record TestEmailParsingResult(

@@ -33,13 +33,8 @@ const EmailParsingRuleDialog = observer(
     const [name, setName] = useState("");
     const [senderAddress, setSenderAddress] = useState("");
     const [subjectPattern, setSubjectPattern] = useState("");
-    const [amountRegex, setAmountRegex] = useState("");
-    const [dateRegex, setDateRegex] = useState("");
-    const [dateFormat, setDateFormat] = useState("MM/dd/yyyy");
     const [currencyFixed, setCurrencyFixed] = useState("");
-    const [currencyRegex, setCurrencyRegex] = useState("");
     const [descriptionFixed, setDescriptionFixed] = useState("");
-    const [descriptionRegex, setDescriptionRegex] = useState("");
     const [transactionType, setTransactionType] = useState("Expense");
     const [categoryId, setCategoryId] = useState("");
     const [priority, setPriority] = useState("0");
@@ -53,13 +48,8 @@ const EmailParsingRuleDialog = observer(
           setName(rule.name);
           setSenderAddress(rule.senderAddress ?? "");
           setSubjectPattern(rule.subjectPattern ?? "");
-          setAmountRegex(rule.amountRegex);
-          setDateRegex(rule.dateRegex ?? "");
-          setDateFormat(rule.dateFormat ?? "");
           setCurrencyFixed(rule.currencyFixed ?? "");
-          setCurrencyRegex(rule.currencyRegex ?? "");
           setDescriptionFixed(rule.descriptionFixed ?? "");
-          setDescriptionRegex(rule.descriptionRegex ?? "");
           setTransactionType(rule.transactionType);
           setCategoryId(String(rule.categoryId ?? ""));
           setPriority(String(rule.priority));
@@ -67,13 +57,8 @@ const EmailParsingRuleDialog = observer(
           setName("");
           setSenderAddress("");
           setSubjectPattern("");
-          setAmountRegex("");
-          setDateRegex("");
-          setDateFormat("");
           setCurrencyFixed("");
-          setCurrencyRegex("");
           setDescriptionFixed("");
-          setDescriptionRegex("");
           setTransactionType("Expense");
           setCategoryId("");
           setPriority("0");
@@ -85,9 +70,6 @@ const EmailParsingRuleDialog = observer(
     const validate = (): boolean => {
       const e: Record<string, string> = {};
       if (!name.trim()) e.name = "Name is required";
-      if (!amountRegex.trim()) e.amountRegex = "Amount regex is required";
-      if (dateRegex.trim() && !dateFormat.trim())
-        e.dateFormat = "Date format is required when date regex is set";
       setErrors(e);
       return Object.keys(e).length === 0;
     };
@@ -96,13 +78,8 @@ const EmailParsingRuleDialog = observer(
       name: name.trim(),
       senderAddress: senderAddress.trim() || null,
       subjectPattern: subjectPattern.trim() || null,
-      amountRegex: amountRegex.trim(),
-      dateRegex: dateRegex.trim(),
-      dateFormat: dateFormat.trim(),
       currencyFixed: currencyFixed.trim() || null,
-      currencyRegex: currencyRegex.trim() || null,
       descriptionFixed: descriptionFixed.trim() || null,
-      descriptionRegex: descriptionRegex.trim() || null,
       transactionType,
       categoryId: categoryId || null,
       priority: Number(priority),
@@ -166,88 +143,28 @@ const EmailParsingRuleDialog = observer(
 
             <Divider>
               <Typography variant="caption" color="text.secondary">
-                Extraction Regexes
+                Overrides (optional)
               </Typography>
             </Divider>
 
             <Stack direction="row" spacing={2}>
               <TextField
-                label="Amount Regex"
-                value={amountRegex}
-                onChange={(e) => setAmountRegex(e.target.value)}
-                fullWidth
-                size="small"
-                error={Boolean(errors.amountRegex)}
-                helperText={
-                  errors.amountRegex ||
-                  "First capture group extracts the amount"
-                }
-                placeholder="\\$([\\d,]+\\.\\d{2})"
-              />
-              <TextField
-                label="Date Regex"
-                value={dateRegex}
-                onChange={(e) => setDateRegex(e.target.value)}
-                fullWidth
-                size="small"
-                error={Boolean(errors.dateRegex)}
-                helperText={
-                  errors.dateRegex ||
-                  "Optional — leave blank to use email sent date"
-                }
-                placeholder="Date:\\s*(\\d{2}/\\d{2}/\\d{4})"
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="Date Format"
-                value={dateFormat}
-                onChange={(e) => setDateFormat(e.target.value)}
-                size="small"
-                sx={{ width: 200 }}
-                error={Boolean(errors.dateFormat)}
-                helperText={
-                  errors.dateFormat || "Required if date regex is set"
-                }
-                placeholder="MM/dd/yyyy"
-              />
-              <TextField
-                label="Currency (fixed)"
+                label="Currency Override"
                 value={currencyFixed}
                 onChange={(e) => setCurrencyFixed(e.target.value)}
                 size="small"
-                sx={{ width: 120 }}
+                sx={{ width: 160 }}
                 placeholder="USD"
-                helperText="Or use regex below"
+                helperText="Override AI-extracted currency"
               />
               <TextField
-                label="Currency Regex"
-                value={currencyRegex}
-                onChange={(e) => setCurrencyRegex(e.target.value)}
-                fullWidth
-                size="small"
-                placeholder="Currency:\\s*(\\w{3})"
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="Description (fixed)"
+                label="Description Override"
                 value={descriptionFixed}
                 onChange={(e) => setDescriptionFixed(e.target.value)}
                 fullWidth
                 size="small"
                 placeholder="Bank transfer"
-                helperText="Or use regex below"
-              />
-              <TextField
-                label="Description Regex"
-                value={descriptionRegex}
-                onChange={(e) => setDescriptionRegex(e.target.value)}
-                fullWidth
-                size="small"
-                placeholder="Merchant:\\s*(.+)"
+                helperText="Override AI-extracted description"
               />
             </Stack>
 
@@ -292,16 +209,7 @@ const EmailParsingRuleDialog = observer(
               />
             </Stack>
 
-            <EmailParsingRuleTestSection
-              amountRegex={amountRegex}
-              dateRegex={dateRegex}
-              dateFormat={dateFormat}
-              currencyFixed={currencyFixed}
-              currencyRegex={currencyRegex}
-              descriptionFixed={descriptionFixed}
-              descriptionRegex={descriptionRegex}
-              open={open}
-            />
+            <EmailParsingRuleTestSection open={open} />
           </Stack>
         </DialogContent>
         <DialogActions sx={DIALOG_ACTIONS_SX}>

@@ -14,7 +14,7 @@ export class EmailParsingRuleStore {
 
   async loadFromApi() {
     await withLoading(this, async () => {
-      const data = await emailParsingRulesApi.emailParsingRulesList();
+      const data = await emailParsingRulesApi.emailParsingRulesGetAll();
       this.rules = data ?? [];
     });
   }
@@ -23,13 +23,8 @@ export class EmailParsingRuleStore {
     name: string;
     senderAddress: string | null;
     subjectPattern: string | null;
-    amountRegex: string;
-    dateRegex: string;
-    dateFormat: string;
     currencyFixed: string | null;
-    currencyRegex: string | null;
     descriptionFixed: string | null;
-    descriptionRegex: string | null;
     transactionType: string;
     categoryId: number | string | null;
     priority?: number;
@@ -46,13 +41,8 @@ export class EmailParsingRuleStore {
       name: string;
       senderAddress: string | null;
       subjectPattern: string | null;
-      amountRegex: string;
-      dateRegex: string;
-      dateFormat: string;
       currencyFixed: string | null;
-      currencyRegex: string | null;
       descriptionFixed: string | null;
-      descriptionRegex: string | null;
       transactionType: string;
       categoryId: number | string | null;
       priority?: number;
@@ -74,16 +64,7 @@ export class EmailParsingRuleStore {
 
   async testRule(input: {
     emailBody: string;
-    emailSubject: string;
-    senderAddress: string;
-    amountRegex: string;
-    dateRegex: string;
-    dateFormat: string;
-    currencyFixed: string | null;
-    currencyRegex: string | null;
-    descriptionFixed: string | null;
-    descriptionRegex: string | null;
   }) {
-    return await emailParsingRulesApi.emailParsingRulesTestCreate(input);
+    return await emailParsingRulesApi.emailParsingRulesTestRule(input);
   }
 }

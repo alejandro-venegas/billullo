@@ -6,6 +6,8 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
 import { useStore } from "@/app/stores/StoreContext";
 import type { CategoryDto, CategoryRuleDto } from "@/api/data-contracts";
@@ -17,6 +19,8 @@ import ConfirmDialog from "@/shared/components/ConfirmDialog/ConfirmDialog";
 import EmailConfigSection from "@/features/email/components/EmailConfigSection/EmailConfigSection";
 import EmailParsingRulesSection from "@/features/email/components/EmailParsingRulesSection/EmailParsingRulesSection";
 import { useNotification } from "@/shared/components/NotificationProvider/NotificationProvider";
+
+const CURRENCIES = ["USD", "CRC"];
 
 interface TabPanelProps {
   children: React.ReactNode;
@@ -33,7 +37,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 }
 
 const SettingsPage = observer(() => {
-  const { categoryStore, ruleStore } = useStore();
+  const { categoryStore, ruleStore, preferenceStore } = useStore();
   const { notify } = useNotification();
   const [tab, setTab] = useState(0);
 
@@ -167,12 +171,38 @@ const SettingsPage = observer(() => {
         onChange={(_, v) => setTab(v)}
         sx={{ borderBottom: 1, borderColor: "divider" }}
       >
+        <Tab label="Preferences" />
         <Tab label="Categories" />
         <Tab label="Email" />
       </Tabs>
 
-      {/* ─── Categories Tab ─── */}
+      {/* ─── Preferences Tab ─── */}
       <TabPanel value={tab} index={0}>
+        <Box sx={{ maxWidth: 400 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Currency
+          </Typography>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label="Preferred Currency"
+            value={preferenceStore.preferredCurrency}
+            onChange={(e) =>
+              preferenceStore.setPreferredCurrency(e.target.value)
+            }
+          >
+            {CURRENCIES.map((c) => (
+              <MenuItem key={c} value={c}>
+                {c}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
+      </TabPanel>
+
+      {/* ─── Categories Tab ─── */}
+      <TabPanel value={tab} index={1}>
         <Box sx={{ maxWidth: 700 }}>
           <Stack
             direction="row"
@@ -208,7 +238,7 @@ const SettingsPage = observer(() => {
       </TabPanel>
 
       {/* ─── Email Tab ─── */}
-      <TabPanel value={tab} index={1}>
+      <TabPanel value={tab} index={2}>
         <Stack spacing={3}>
           <EmailConfigSection />
           <EmailParsingRulesSection />

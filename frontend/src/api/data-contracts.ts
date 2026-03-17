@@ -11,359 +11,279 @@
  */
 
 export interface AuthResponse {
-  token: string;
-  refreshToken: string;
+  token?: string;
+  refreshToken?: string;
   /** @format date-time */
-  expiresAt: string;
-  user: UserDto;
+  expiresAt?: string;
+  user?: UserDto;
+}
+
+export interface UserDto {
+  id?: string;
+  email?: string;
+  preferredCurrency?: string;
+}
+
+export interface RegisterRequest {
+  email?: string;
+  password?: string;
+}
+
+export interface LoginRequest {
+  email?: string;
+  password?: string;
+}
+
+export interface RefreshRequest {
+  refreshToken?: string;
+}
+
+export interface UpdatePreferencesRequest {
+  preferredCurrency?: string;
 }
 
 export interface CategoryDto {
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  id: number | string;
-  name: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  parentCategoryId: number | null | string;
-  color: null | string;
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  ruleCount: number | string;
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  transactionCount: number | string;
-}
-
-export interface CategoryRuleDto {
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  id: number | string;
-  pattern: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | string;
-  categoryName: null | string;
+  /** @format int64 */
+  id?: number;
+  name?: string;
+  /** @format int64 */
+  parentCategoryId?: number | null;
+  color?: string | null;
+  /** @format int32 */
+  ruleCount?: number;
+  /** @format int32 */
+  transactionCount?: number;
 }
 
 export interface CreateCategoryRequest {
-  name: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  parentCategoryId?: number | null | string;
-  color?: null | string;
+  name?: string;
+  /** @format int64 */
+  parentCategoryId?: number | null;
+  color?: string | null;
 }
 
-export interface CreateCategoryRuleRequest {
-  pattern: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | string;
+export interface UpdateCategoryRequest {
+  name?: string;
+  color?: string | null;
+}
+
+export interface EmailConfigDto {
+  /** @format int64 */
+  id?: number;
+  imapHost?: string;
+  /** @format int32 */
+  imapPort?: number;
+  emailAddress?: string;
+  hasPassword?: boolean;
+  useSsl?: boolean;
+  enabled?: boolean;
+}
+
+export interface UpsertEmailConfigRequest {
+  imapHost?: string;
+  /** @format int32 */
+  imapPort?: number;
+  emailAddress?: string;
+  password?: string | null;
+  useSsl?: boolean;
+  enabled?: boolean;
+}
+
+export interface TestConnectionResult {
+  success?: boolean;
+  error?: string | null;
+}
+
+export interface TestEmailConfigRequest {
+  imapHost?: string;
+  /** @format int32 */
+  imapPort?: number;
+  emailAddress?: string;
+  password?: string;
+  useSsl?: boolean;
+}
+
+export interface TestScrapeResult {
+  success?: boolean;
+  emails?: ScrapedEmail[] | null;
+  error?: string | null;
+}
+
+export interface ScrapedEmail {
+  uid?: number;
+  from?: string;
+  /** @format date-time */
+  date?: string;
+  subject?: string;
+  bodyPreview?: string;
+  parsedTransaction?: ParsedTransactionPreview | null;
+  matchLog?: string[] | null;
+}
+
+export interface ParsedTransactionPreview {
+  /** @format decimal */
+  amount?: number | null;
+  /** @format date-time */
+  date?: string | null;
+  currency?: string | null;
+  description?: string | null;
+  matchedRuleName?: string;
+}
+
+export interface EmailParsingRuleDto {
+  /** @format int64 */
+  id?: number;
+  name?: string;
+  senderAddress?: string | null;
+  subjectPattern?: string | null;
+  currencyFixed?: string | null;
+  descriptionFixed?: string | null;
+  transactionType?: string;
+  /** @format int64 */
+  categoryId?: number | null;
+  categoryName?: string | null;
+  /** @format int32 */
+  priority?: number;
 }
 
 export interface CreateEmailParsingRuleRequest {
-  name: string;
-  senderAddress: null | string;
-  subjectPattern: null | string;
-  amountRegex: string;
-  dateRegex: string;
-  dateFormat: string;
-  currencyFixed: null | string;
-  currencyRegex: null | string;
-  descriptionFixed: null | string;
-  descriptionRegex: null | string;
-  transactionType: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | null | string;
-  /**
-   * @format int32
-   * @default 0
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  priority?: number | string;
+  name?: string;
+  senderAddress?: string | null;
+  subjectPattern?: string | null;
+  currencyFixed?: string | null;
+  descriptionFixed?: string | null;
+  transactionType?: string;
+  /** @format int64 */
+  categoryId?: number | null;
+  /** @format int32 */
+  priority?: number;
+}
+
+export interface UpdateEmailParsingRuleRequest {
+  name?: string;
+  senderAddress?: string | null;
+  subjectPattern?: string | null;
+  currencyFixed?: string | null;
+  descriptionFixed?: string | null;
+  transactionType?: string;
+  /** @format int64 */
+  categoryId?: number | null;
+  /** @format int32 */
+  priority?: number;
+}
+
+export interface TestEmailParsingResult {
+  matched?: boolean;
+  /** @format decimal */
+  amount?: number | null;
+  /** @format date-time */
+  date?: string | null;
+  currency?: string | null;
+  description?: string | null;
+  error?: string | null;
+}
+
+export interface TestEmailParsingRuleRequest {
+  emailBody?: string;
+}
+
+export interface CategoryRuleDto {
+  /** @format int64 */
+  id?: number;
+  pattern?: string;
+  /** @format int64 */
+  categoryId?: number;
+  categoryName?: string | null;
+}
+
+export interface RuleMatchResult {
+  /** @format int64 */
+  categoryId?: number | null;
+  categoryName?: string | null;
+  conflicts?: boolean;
+  matches?: CategoryRuleDto[];
+}
+
+export interface CreateCategoryRuleRequest {
+  pattern?: string;
+  /** @format int64 */
+  categoryId?: number;
+}
+
+export interface UpdateCategoryRuleRequest {
+  pattern?: string;
+  /** @format int64 */
+  categoryId?: number;
+}
+
+export interface PaginatedResponseOfTransactionDto {
+  items?: TransactionDto[];
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  page?: number;
+  /** @format int32 */
+  pageSize?: number;
+  /** @format int32 */
+  totalPages?: number;
+}
+
+export interface TransactionDto {
+  /** @format int64 */
+  id?: number;
+  /** @format date-time */
+  date?: string;
+  description?: string;
+  /** @format int64 */
+  categoryId?: number | null;
+  categoryName?: string | null;
+  /** @format decimal */
+  amount?: number;
+  currency?: string;
+  type?: string;
+  source?: string;
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  updatedAt?: string;
+  /** @format decimal */
+  convertedAmount?: number | null;
+  targetCurrency?: string | null;
+}
+
+export interface TransactionBalanceDto {
+  /** @format decimal */
+  total?: number;
+  targetCurrency?: string;
+  breakdown?: CurrencyBalance[];
+}
+
+export interface CurrencyBalance {
+  currency?: string;
+  /** @format decimal */
+  originalAmount?: number;
 }
 
 export interface CreateTransactionRequest {
   /** @format date-time */
-  date: string;
-  description: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | null | string;
-  /**
-   * @format double
-   * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?$
-   */
-  amount: number | string;
-  currency: string;
-  type: string;
-}
-
-export interface EmailConfigDto {
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  id: number | string;
-  imapHost: string;
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  imapPort: number | string;
-  emailAddress: string;
-  hasPassword: boolean;
-  useSsl: boolean;
-  enabled: boolean;
-}
-
-export interface EmailParsingRuleDto {
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  id: number | string;
-  name: string;
-  senderAddress: null | string;
-  subjectPattern: null | string;
-  amountRegex: string;
-  dateRegex: string;
-  dateFormat: string;
-  currencyFixed: null | string;
-  currencyRegex: null | string;
-  descriptionFixed: null | string;
-  descriptionRegex: null | string;
-  transactionType: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | null | string;
-  categoryName: null | string;
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  priority: number | string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface PaginatedResponseOfTransactionDto {
-  items: TransactionDto[];
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  totalCount: number | string;
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  page: number | string;
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  pageSize: number | string;
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  totalPages: number | string;
-}
-
-export interface RefreshRequest {
-  refreshToken: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-}
-
-export interface RuleMatchResult {
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | null | string;
-  categoryName: null | string;
-  conflicts: boolean;
-  matches: CategoryRuleDto[];
-}
-
-export interface TestConnectionResult {
-  success: boolean;
-  error: null | string;
-}
-
-export interface TestEmailConfigRequest {
-  imapHost: string;
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  imapPort: number | string;
-  emailAddress: string;
-  password: string;
-  /** @default true */
-  useSsl?: boolean;
-}
-
-export interface TestEmailParsingResult {
-  matched: boolean;
-  /**
-   * @format double
-   * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?$
-   */
-  amount: null | number | string;
-  /** @format date-time */
-  date: null | string;
-  currency: null | string;
-  description: null | string;
-  error: null | string;
-}
-
-export interface TestEmailParsingRuleRequest {
-  emailBody: string;
-  emailSubject: string;
-  senderAddress: string;
-  amountRegex: string;
-  dateRegex: string;
-  dateFormat: string;
-  currencyFixed: null | string;
-  currencyRegex: null | string;
-  descriptionFixed: null | string;
-  descriptionRegex: null | string;
-}
-
-export interface TransactionDto {
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  id: number | string;
-  /** @format date-time */
-  date: string;
-  description: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | null | string;
-  categoryName: null | string;
-  /**
-   * @format double
-   * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?$
-   */
-  amount: number | string;
-  currency: string;
-  type: string;
-  source: string;
-  /** @format date-time */
-  createdAt: string;
-  /** @format date-time */
-  updatedAt: string;
-}
-
-export interface UpdateCategoryRequest {
-  name: string;
-  color?: null | string;
-}
-
-export interface UpdateCategoryRuleRequest {
-  pattern: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | string;
-}
-
-export interface UpdateEmailParsingRuleRequest {
-  name: string;
-  senderAddress: null | string;
-  subjectPattern: null | string;
-  amountRegex: string;
-  dateRegex: string;
-  dateFormat: string;
-  currencyFixed: null | string;
-  currencyRegex: null | string;
-  descriptionFixed: null | string;
-  descriptionRegex: null | string;
-  transactionType: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | null | string;
-  /**
-   * @format int32
-   * @default 0
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  priority?: number | string;
+  date?: string;
+  description?: string;
+  /** @format int64 */
+  categoryId?: number | null;
+  /** @format decimal */
+  amount?: number;
+  currency?: string;
+  type?: string;
 }
 
 export interface UpdateTransactionRequest {
   /** @format date-time */
-  date: string;
-  description: string;
-  /**
-   * @format int64
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  categoryId: number | null | string;
-  /**
-   * @format double
-   * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?$
-   */
-  amount: number | string;
-  currency: string;
-  type: string;
-}
-
-export interface UpsertEmailConfigRequest {
-  imapHost: string;
-  /**
-   * @format int32
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  imapPort: number | string;
-  emailAddress: string;
-  password: null | string;
-  /** @default true */
-  useSsl?: boolean;
-  /** @default false */
-  enabled?: boolean;
-}
-
-export interface UserDto {
-  id: string;
-  email: string;
+  date?: string;
+  description?: string;
+  /** @format int64 */
+  categoryId?: number | null;
+  /** @format decimal */
+  amount?: number;
+  currency?: string;
+  type?: string;
 }

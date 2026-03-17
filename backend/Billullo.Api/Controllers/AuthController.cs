@@ -1,5 +1,10 @@
+using System.Security.Claims;
+using AutoMapper;
 using Billullo.Api.DTOs;
+using Billullo.Api.Models;
 using Billullo.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Billullo.Api.Controllers;
@@ -9,10 +14,14 @@ namespace Billullo.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly UserManager<AppUser> _userManager;
+    private readonly IMapper _mapper;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, UserManager<AppUser> userManager, IMapper mapper)
     {
         _authService = authService;
+        _userManager = userManager;
+        _mapper = mapper;
     }
 
     [HttpPost("register")]
@@ -41,5 +50,29 @@ public class AuthController : ControllerBase
     {
         await _authService.RevokeRefreshTokenAsync(request.RefreshToken);
         return NoContent();
+    }
+
+    [Authorize]
+    [HttpGet("preferences")]
+    public async Task<ActionResult<UserDto>> GetPreferences()
+    {
+        var user = await _userManager.FindByIdAsync(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (user == null) return Unauthorized();
+        return Ok(_mapper.Map<UserDto>(user));
+    }
+
+    [Authorize]
+    [HttpPatch("preferences")]
+    public async Task<ActionResult<UserDto>> UpdatePreferences([FromBody] UpdatePreferencesRequest request)
+    {
+        var user = await _userManager.FindByIdAsync(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (user == null) return Unauthorized();
+
+        user.PreferredCurrency = request.PreferredCurrency;
+        await _userManager.UpdateAsync(user);
+
+        return Ok(_mapper.Map<UserDto>(user));
     }
 }

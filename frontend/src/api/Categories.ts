@@ -24,10 +24,10 @@ export class Categories<
    * No description
    *
    * @tags Categories
-   * @name CategoriesList
+   * @name CategoriesGetAll
    * @request GET:/api/Categories
    */
-  categoriesList = (params: RequestParams = {}) =>
+  categoriesGetAll = (params: RequestParams = {}) =>
     this.request<CategoryDto[], any>({
       path: `/api/Categories`,
       method: "GET",
@@ -57,10 +57,10 @@ export class Categories<
    * No description
    *
    * @tags Categories
-   * @name CategoriesDetail
+   * @name CategoriesGetById
    * @request GET:/api/Categories/{id}
    */
-  categoriesDetail = (id: number | string, params: RequestParams = {}) =>
+  categoriesGetById = (id: number, params: RequestParams = {}) =>
     this.request<CategoryDto, any>({
       path: `/api/Categories/${id}`,
       method: "GET",
@@ -75,7 +75,7 @@ export class Categories<
    * @request PUT:/api/Categories/{id}
    */
   categoriesUpdate = (
-    id: number | string,
+    id: number,
     data: UpdateCategoryRequest,
     params: RequestParams = {},
   ) =>
@@ -94,8 +94,8 @@ export class Categories<
    * @name CategoriesDelete
    * @request DELETE:/api/Categories/{id}
    */
-  categoriesDelete = (id: number | string, params: RequestParams = {}) =>
-    this.request<void, any>({
+  categoriesDelete = (id: number, params: RequestParams = {}) =>
+    this.request<Blob, any>({
       path: `/api/Categories/${id}`,
       method: "DELETE",
       ...params,

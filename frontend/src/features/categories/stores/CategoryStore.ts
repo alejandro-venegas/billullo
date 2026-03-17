@@ -23,7 +23,7 @@ export class CategoryStore {
 
   async loadFromApi() {
     await withLoading(this, async () => {
-      const data = await categoriesApi.categoriesList();
+      const data = await categoriesApi.categoriesGetAll();
       this.categories = data ?? [];
     });
   }

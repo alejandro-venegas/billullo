@@ -9,6 +9,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useStore } from "@/app/stores/StoreContext";
 
+
 interface TestRuleResult {
   matched: boolean;
   amount?: number | string | null;
@@ -19,62 +20,31 @@ interface TestRuleResult {
 }
 
 interface EmailParsingRuleTestSectionProps {
-  amountRegex: string;
-  dateRegex: string;
-  dateFormat: string;
-  currencyFixed: string;
-  currencyRegex: string;
-  descriptionFixed: string;
-  descriptionRegex: string;
   open: boolean;
 }
 
 function EmailParsingRuleTestSection({
-  amountRegex,
-  dateRegex,
-  dateFormat,
-  currencyFixed,
-  currencyRegex,
-  descriptionFixed,
-  descriptionRegex,
   open,
 }: EmailParsingRuleTestSectionProps) {
   const { emailParsingRuleStore } = useStore();
 
   const [testBody, setTestBody] = useState("");
-  const [testSubject, setTestSubject] = useState("");
-  const [testSender, setTestSender] = useState("");
   const [testResult, setTestResult] = useState<TestRuleResult | null>(null);
   const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     if (open) {
       setTestBody("");
-      setTestSubject("");
-      setTestSender("");
       setTestResult(null);
     }
   }, [open]);
 
   const handleTest = async () => {
-    if (!amountRegex.trim()) {
-      setTestResult({ matched: false, error: "Amount regex is required to test" });
-      return;
-    }
     setTesting(true);
     setTestResult(null);
     try {
       const result = await emailParsingRuleStore.testRule({
         emailBody: testBody,
-        emailSubject: testSubject,
-        senderAddress: testSender,
-        amountRegex: amountRegex.trim(),
-        dateRegex: dateRegex.trim(),
-        dateFormat: dateFormat.trim(),
-        currencyFixed: currencyFixed.trim() || null,
-        currencyRegex: currencyRegex.trim() || null,
-        descriptionFixed: descriptionFixed.trim() || null,
-        descriptionRegex: descriptionRegex.trim() || null,
       });
       setTestResult(
         (result as TestRuleResult) ?? { matched: false, error: "No response" },
@@ -102,35 +72,19 @@ function EmailParsingRuleTestSection({
         rows={3}
         fullWidth
         size="small"
-        placeholder="Paste a sample email body to test extraction..."
+        placeholder="Paste a sample email body to test AI extraction..."
       />
-      <Stack direction="row" spacing={2}>
-        <TextField
-          label="Sample Subject"
-          value={testSubject}
-          onChange={(e) => setTestSubject(e.target.value)}
-          fullWidth
-          size="small"
-        />
-        <TextField
-          label="Sample Sender"
-          value={testSender}
-          onChange={(e) => setTestSender(e.target.value)}
-          fullWidth
-          size="small"
-        />
-        <Button
-          variant="outlined"
-          startIcon={
-            testing ? <CircularProgress size={18} /> : <PlayArrowIcon />
-          }
-          onClick={handleTest}
-          disabled={testing || !testBody.trim()}
-          sx={{ minWidth: 100 }}
-        >
-          Test
-        </Button>
-      </Stack>
+      <Button
+        variant="outlined"
+        startIcon={
+          testing ? <CircularProgress size={18} /> : <PlayArrowIcon />
+        }
+        onClick={handleTest}
+        disabled={testing || !testBody.trim()}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        {testing ? "Extracting..." : "Test AI Extraction"}
+      </Button>
 
       {testResult && (
         <Alert severity={testResult.matched ? "success" : "warning"}>

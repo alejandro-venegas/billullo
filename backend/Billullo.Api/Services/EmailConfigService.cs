@@ -153,7 +153,7 @@ public class EmailConfigService : IEmailConfigService
                 var message = await inbox.GetMessageAsync(uid);
                 var sender = message.From.Mailboxes.FirstOrDefault()?.Address ?? string.Empty;
                 var subject = message.Subject ?? string.Empty;
-                var body = message.TextBody ?? string.Empty;
+                var body = message.TextBody ?? message.HtmlBody ?? string.Empty;
 
                 var bodyPreview = body.Length > 500 ? body[..500] + "..." : body;
 
@@ -192,35 +192,28 @@ public class EmailConfigService : IEmailConfigService
                         }
                     }
 
-                    matchLog.Add($"Rule '{rule.Name}': sender/subject filters passed, running parser...");
+                    matchLog.Add($"Rule '{rule.Name}': sender/subject filters passed, running AI parser...");
 
-                    var result = _parserService.ParseEmail(
-                        body,
-                        rule.AmountRegex,
-                        rule.DateRegex,
-                        rule.DateFormat,
-                        rule.CurrencyFixed?.ToString(),
-                        rule.CurrencyRegex,
-                        rule.DescriptionFixed,
-                        rule.DescriptionRegex,
-                        fallbackDate: message.Date.UtcDateTime
-                    );
+                    var result = await _parserService.ParseEmailAsync(body, fallbackDate: message.Date.UtcDateTime);
 
                     if (result.Matched)
                     {
-                        matchLog.Add($"Rule '{rule.Name}': MATCHED — amount={result.Amount}, date={result.Date}, currency={result.Currency}, desc={result.Description}");
+                        var currency = rule.CurrencyFixed?.ToString() ?? result.Currency;
+                        var description = rule.DescriptionFixed ?? result.Description;
+
+                        matchLog.Add($"Rule '{rule.Name}': MATCHED — amount={result.Amount}, date={result.Date}, currency={currency}, desc={description}");
                         parsed = new ParsedTransactionPreview(
                             Amount: result.Amount,
                             Date: result.Date,
-                            Currency: result.Currency,
-                            Description: result.Description,
+                            Currency: currency,
+                            Description: description,
                             MatchedRuleName: rule.Name
                         );
                         break;
                     }
                     else
                     {
-                        matchLog.Add($"Rule '{rule.Name}': parser failed — {result.Error}");
+                        matchLog.Add($"Rule '{rule.Name}': AI parser failed — {result.Error}");
                     }
                 }
 

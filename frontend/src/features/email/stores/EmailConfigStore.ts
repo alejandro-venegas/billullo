@@ -14,7 +14,7 @@ export class EmailConfigStore {
 
   async loadFromApi() {
     await withLoading(this, async () => {
-      this.config = await emailConfigApi.emailConfigList();
+      this.config = await emailConfigApi.emailConfigGet();
     });
   }
 
@@ -26,7 +26,7 @@ export class EmailConfigStore {
     useSsl: boolean;
     enabled: boolean;
   }) {
-    const data = await emailConfigApi.emailConfigUpdate(input);
+    const data = await emailConfigApi.emailConfigUpsert(input);
     runInAction(() => {
       this.config = data;
     });
@@ -39,7 +39,7 @@ export class EmailConfigStore {
     password: string;
     useSsl: boolean;
   }): Promise<TestConnectionResult> {
-    return await emailConfigApi.emailConfigTestCreate(input);
+    return await emailConfigApi.emailConfigTestConnection(input);
   }
 
   async remove() {

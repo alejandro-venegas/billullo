@@ -16,7 +16,7 @@ export class RuleStore {
 
   async loadFromApi() {
     await withLoading(this, async () => {
-      const data = await rulesApi.rulesList();
+      const data = await rulesApi.rulesGetAll();
       this.rules = data ?? [];
     });
   }
@@ -49,7 +49,7 @@ export class RuleStore {
     if (!description.trim()) return empty;
 
     try {
-      return await rulesApi.rulesMatchList({ description });
+      return await rulesApi.rulesMatch({ description });
     } catch {
       return empty;
     }

@@ -13,7 +13,9 @@ public class MappingProfile : Profile
             .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : null))
             .ForMember(d => d.Currency, o => o.MapFrom(s => s.Currency.ToString()))
             .ForMember(d => d.Type, o => o.MapFrom(s => s.Type.ToString().ToLowerInvariant()))
-            .ForMember(d => d.Source, o => o.MapFrom(s => s.Source.ToString().ToLowerInvariant()));
+            .ForMember(d => d.Source, o => o.MapFrom(s => s.Source.ToString().ToLowerInvariant()))
+            .ForMember(d => d.ConvertedAmount, o => o.Ignore())
+            .ForMember(d => d.TargetCurrency, o => o.Ignore());
 
         CreateMap<CreateTransactionRequest, Transaction>()
             .ForMember(d => d.Currency, o => o.MapFrom(s => Enum.Parse<Currency>(s.Currency, true)))

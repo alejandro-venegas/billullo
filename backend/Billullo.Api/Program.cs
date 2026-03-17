@@ -68,7 +68,13 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRuleService, CategoryRuleService>();
 builder.Services.AddScoped<IEmailConfigService, EmailConfigService>();
 builder.Services.AddScoped<IEmailParsingRuleService, EmailParsingRuleService>();
-builder.Services.AddScoped<IEmailParserService, EmailParserService>();
+builder.Services.AddScoped<IEmailParserService, AiEmailParserService>();
+
+// ── OpenAI ──
+var openAiApiKey = builder.Configuration["OpenAi:ApiKey"]
+    ?? throw new InvalidOperationException("OpenAi:ApiKey not configured. Use 'dotnet user-secrets set \"OpenAi:ApiKey\" \"<key>\"'.");
+
+builder.Services.AddSingleton(new OpenAI.Chat.ChatClient("gpt-4o-mini", openAiApiKey));
 
 // ── Currency Service ──
 _ = builder.Configuration["ExchangeRateApi:ApiKey"]

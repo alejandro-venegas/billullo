@@ -5,17 +5,11 @@ namespace Billullo.Api.Services.Interfaces;
 public interface IEmailParserService
 {
     /// <summary>
-    /// Parses an email body using the provided regex patterns and returns extracted transaction fields.
+    /// Parses an email body using AI and returns extracted transaction fields
+    /// (amount, date/time, currency, description).
     /// </summary>
-    TestEmailParsingResult ParseEmail(
+    Task<TestEmailParsingResult> ParseEmailAsync(
         string emailBody,
-        string amountRegex,
-        string? dateRegex,
-        string? dateFormat,
-        string? currencyFixed,
-        string? currencyRegex,
-        string? descriptionFixed,
-        string? descriptionRegex,
         DateTime? fallbackDate = null
     );
 }

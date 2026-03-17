@@ -42,15 +42,16 @@ export class TransactionStore {
     this.page = 1;
   }
 
-  async loadFromApi() {
+  async loadFromApi(targetCurrency?: string) {
     await withLoading(this, async () => {
-      const data = await transactionsApi.transactionsList({
+      const data = await transactionsApi.transactionsGetAll({
         page: this.page,
         pageSize: this.pageSize,
         type: this.typeFilter !== "all" ? this.typeFilter : undefined,
         startDate: this.startDate ?? undefined,
         endDate: this.endDate ?? undefined,
         search: this.search || undefined,
+        targetCurrency: targetCurrency || undefined,
       });
       this.transactions = data.items ?? [];
       this.totalCount = Number(data.totalCount ?? 0);

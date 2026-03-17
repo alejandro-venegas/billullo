@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using AutoMapper;
 using Billullo.Api.Data;
 using Billullo.Api.DTOs;
@@ -45,7 +44,6 @@ public class EmailParsingRuleService : IEmailParsingRuleService
     public async Task<EmailParsingRuleDto> CreateAsync(string userId, CreateEmailParsingRuleRequest request)
     {
         ValidateRequest(request.SenderAddress, request.SubjectPattern);
-        ValidateRegexPatterns(request.AmountRegex, request.DateRegex, request.CurrencyRegex, request.DescriptionRegex);
 
         var rule = _mapper.Map<EmailParsingRule>(request);
         rule.UserId = userId;
@@ -63,7 +61,6 @@ public class EmailParsingRuleService : IEmailParsingRuleService
     public async Task<EmailParsingRuleDto?> UpdateAsync(string userId, long id, UpdateEmailParsingRuleRequest request)
     {
         ValidateRequest(request.SenderAddress, request.SubjectPattern);
-        ValidateRegexPatterns(request.AmountRegex, request.DateRegex, request.CurrencyRegex, request.DescriptionRegex);
 
         var rule = await _db.EmailParsingRules
             .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
@@ -92,20 +89,9 @@ public class EmailParsingRuleService : IEmailParsingRuleService
         return true;
     }
 
-    public Task<TestEmailParsingResult> TestRuleAsync(TestEmailParsingRuleRequest request)
+    public async Task<TestEmailParsingResult> TestRuleAsync(TestEmailParsingRuleRequest request)
     {
-        var result = _parser.ParseEmail(
-            request.EmailBody,
-            request.AmountRegex,
-            request.DateRegex,
-            request.DateFormat,
-            request.CurrencyFixed,
-            request.CurrencyRegex,
-            request.DescriptionFixed,
-            request.DescriptionRegex
-        );
-
-        return Task.FromResult(result);
+        return await _parser.ParseEmailAsync(request.EmailBody);
     }
 
     public async Task SeedDefaultsAsync(string userId)
@@ -120,9 +106,6 @@ public class EmailParsingRuleService : IEmailParsingRuleService
                 UserId = userId,
                 Name = "BAC",
                 SubjectPattern = "Notificación de transacción",
-                AmountRegex = @"Monto:\s*[A-Z]{3}\s*([\d,]+\.\d{2})",
-                CurrencyRegex = @"Monto:\s*(?<currency>[A-Z]{3})",
-                DescriptionRegex = @"Comercio:\s*(?<merchant>.*?)\s*Ciudad y país:",
                 TransactionType = TransactionType.Expense,
             },
             new EmailParsingRule
@@ -130,9 +113,6 @@ public class EmailParsingRuleService : IEmailParsingRuleService
                 UserId = userId,
                 Name = "DaviBank",
                 SubjectPattern = "Alerta Transacción",
-                AmountRegex = @"por\s*[A-Z]{3}\s*([\d,]+\.\d{2})",
-                CurrencyRegex = @"por\s*([A-Z]{3})\s*[\d,]+\.\d{2}",
-                DescriptionRegex = @"realizada en\s*(.*?),\s*el día",
                 TransactionType = TransactionType.Expense,
             },
         };
@@ -147,23 +127,4 @@ public class EmailParsingRuleService : IEmailParsingRuleService
             throw new InvalidOperationException("At least one of SenderAddress or SubjectPattern must be provided.");
     }
 
-    private static void ValidateRegexPatterns(string amountRegex, string? dateRegex, string? currencyRegex, string? descriptionRegex)
-    {
-        ValidateRegex(amountRegex, "AmountRegex");
-        if (!string.IsNullOrWhiteSpace(dateRegex)) ValidateRegex(dateRegex, "DateRegex");
-        if (!string.IsNullOrWhiteSpace(currencyRegex)) ValidateRegex(currencyRegex, "CurrencyRegex");
-        if (!string.IsNullOrWhiteSpace(descriptionRegex)) ValidateRegex(descriptionRegex, "DescriptionRegex");
-    }
-
-    private static void ValidateRegex(string pattern, string fieldName)
-    {
-        try
-        {
-            _ = new Regex(pattern, RegexOptions.None, TimeSpan.FromMilliseconds(200));
-        }
-        catch (ArgumentException ex)
-        {
-            throw new InvalidOperationException($"Invalid regex in {fieldName}: {ex.Message}");
-        }
-    }
 }

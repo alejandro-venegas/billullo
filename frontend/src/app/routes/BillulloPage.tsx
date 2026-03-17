@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { observer } from "mobx-react-lite";
+import { reaction } from "mobx";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -25,7 +26,9 @@ import CategoryChip from "@/features/categories/components/CategoryChip/Category
 import type { FilterValues } from "@/features/transactions/components/TransactionFilters/TransactionFilters";
 import ConfirmDialog from "@/shared/components/ConfirmDialog/ConfirmDialog";
 import { useNotification } from "@/shared/components/NotificationProvider/NotificationProvider";
+import BalanceSummary from "@/features/transactions/components/BalanceSummary/BalanceSummary";
 import { DATE_TIME_FORMAT } from "@/shared/constants";
+import { formatCurrency } from "@/shared/utils/currency";
 
 function useTransactionColumns(
   onEdit: (t: TransactionDto) => void,
@@ -63,14 +66,27 @@ function useTransactionColumns(
       {
         field: "amount",
         headerName: "Amount",
-        width: 130,
+        width: 150,
         type: "number",
-        valueFormatter: (value: number | string, row: TransactionDto) => {
-          return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: row.currency,
-            minimumFractionDigits: 2,
-          }).format(Number(value));
+        renderCell: (params: GridRenderCellParams<TransactionDto>) => {
+          const { amount, currency, convertedAmount, targetCurrency } =
+            params.row;
+          const formatted = formatCurrency(Number(amount), currency ?? "USD");
+
+          if (
+            convertedAmount != null &&
+            targetCurrency &&
+            targetCurrency !== currency
+          ) {
+            return (
+              <Tooltip
+                title={`${formatCurrency(convertedAmount, targetCurrency)}`}
+              >
+                <span>{formatted}</span>
+              </Tooltip>
+            );
+          }
+          return <span>{formatted}</span>;
         },
       },
       {
@@ -129,7 +145,7 @@ function useTransactionColumns(
 }
 
 const BillulloPage = observer(() => {
-  const { transactionStore } = useStore();
+  const { transactionStore, preferenceStore } = useStore();
   const { notify } = useNotification();
 
   const [filters, setFilters] = useState<FilterValues>({
@@ -153,6 +169,15 @@ const BillulloPage = observer(() => {
     return () => clearTimeout(searchTimeoutRef.current);
   }, []);
 
+  useEffect(
+    () =>
+      reaction(
+        () => preferenceStore.preferredCurrency,
+        () => transactionStore.loadFromApi(preferenceStore.preferredCurrency),
+      ),
+    [transactionStore, preferenceStore],
+  );
+
   const handleFilterChange = useCallback(
     (newFilters: FilterValues) => {
       const prev = prevFiltersRef.current;
@@ -166,7 +191,7 @@ const BillulloPage = observer(() => {
           endDate: newFilters.endDate?.toISOString() ?? null,
           search: newFilters.search,
         });
-        transactionStore.loadFromApi();
+        transactionStore.loadFromApi(preferenceStore.preferredCurrency);
       };
 
       const onlySearchChanged =
@@ -182,7 +207,7 @@ const BillulloPage = observer(() => {
         syncToStore();
       }
     },
-    [transactionStore],
+    [transactionStore, preferenceStore.preferredCurrency],
   );
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -248,6 +273,8 @@ const BillulloPage = observer(() => {
 
       <TransactionFilters filters={filters} onChange={handleFilterChange} />
 
+      <BalanceSummary />
+
       <Box sx={{ width: "100%" }}>
         <DataGrid
           rows={transactionStore.transactions}
@@ -263,7 +290,7 @@ const BillulloPage = observer(() => {
           onPaginationModelChange={(model) => {
             transactionStore.setPage(model.page + 1);
             transactionStore.setPageSize(model.pageSize);
-            transactionStore.loadFromApi();
+            transactionStore.loadFromApi(preferenceStore.preferredCurrency);
           }}
           pageSizeOptions={[10, 25, 50]}
           loading={transactionStore.isLoading}

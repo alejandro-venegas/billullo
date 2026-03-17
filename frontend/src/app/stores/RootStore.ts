@@ -4,6 +4,7 @@ import { RuleStore } from "@/features/categories/stores/RuleStore";
 import { AuthStore } from "@/features/auth/stores/AuthStore";
 import { EmailConfigStore } from "@/features/email/stores/EmailConfigStore";
 import { EmailParsingRuleStore } from "@/features/email/stores/EmailParsingRuleStore";
+import { PreferenceStore } from "@/features/preferences/stores/PreferenceStore";
 
 export class RootStore {
   authStore: AuthStore;
@@ -12,6 +13,7 @@ export class RootStore {
   ruleStore: RuleStore;
   emailConfigStore: EmailConfigStore;
   emailParsingRuleStore: EmailParsingRuleStore;
+  preferenceStore: PreferenceStore;
 
   constructor() {
     this.authStore = new AuthStore();
@@ -20,13 +22,14 @@ export class RootStore {
     this.ruleStore = new RuleStore();
     this.emailConfigStore = new EmailConfigStore();
     this.emailParsingRuleStore = new EmailParsingRuleStore();
+    this.preferenceStore = new PreferenceStore();
 
-    // Wire up: after auth succeeds, load all data from API
     this.authStore.setOnAuthenticated(() => this.loadAll());
   }
 
   async loadAll() {
     await Promise.all([
+      this.preferenceStore.loadFromApi(),
       this.transactionStore.loadFromApi(),
       this.categoryStore.loadFromApi(),
       this.ruleStore.loadFromApi(),
@@ -36,6 +39,6 @@ export class RootStore {
   }
 
   dispose() {
-    // no-op; stores no longer use localStorage reactions
+    // no-op
   }
 }

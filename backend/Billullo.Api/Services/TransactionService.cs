@@ -11,14 +11,64 @@ public class TransactionService : ITransactionService
 {
     private readonly AppDbContext _db;
     private readonly IMapper _mapper;
+    private readonly ICurrencyService _currencyService;
 
-    public TransactionService(AppDbContext db, IMapper mapper)
+    private const string BaseCurrency = "USD";
+
+    public TransactionService(AppDbContext db, IMapper mapper, ICurrencyService currencyService)
     {
         _db = db;
         _mapper = mapper;
+        _currencyService = currencyService;
     }
 
-    public async Task<PaginatedResponse<TransactionDto>> GetAllAsync(string userId, TransactionFilterParams filters)
+    private IQueryable<Transaction> BuildFilteredQuery(string userId, TransactionFilterParams filters)
+    {
+        var query = _db.Transactions
+            .Include(t => t.Category)
+            .Where(t => t.UserId == userId)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(filters.Type) && filters.Type != "all")
+        {
+            if (Enum.TryParse<TransactionType>(filters.Type, true, out var type))
+                query = query.Where(t => t.Type == type);
+        }
+
+        if (filters.StartDate.HasValue)
+            query = query.Where(t => t.Date >= filters.StartDate.Value);
+
+        if (filters.EndDate.HasValue)
+            query = query.Where(t => t.Date <= filters.EndDate.Value);
+
+        if (!string.IsNullOrWhiteSpace(filters.Search))
+            query = query.Where(t => t.Description.ToLower().Contains(filters.Search.ToLower()));
+
+        return query;
+    }
+
+    private async Task<decimal?> GetUsdToCrcRateAsync()
+    {
+        var rate = await _currencyService.GetLatestRateAsync(BaseCurrency, "CRC");
+        return rate?.Rate;
+    }
+
+    private static decimal ConvertAmount(decimal amount, string fromCurrency, string targetCurrency, decimal usdToCrcRate)
+    {
+        if (fromCurrency == targetCurrency) return amount;
+
+        // USD → CRC: multiply
+        if (fromCurrency == "USD" && targetCurrency == "CRC")
+            return amount * usdToCrcRate;
+
+        // CRC → USD: divide
+        if (fromCurrency == "CRC" && targetCurrency == "USD")
+            return usdToCrcRate == 0 ? amount : amount / usdToCrcRate;
+
+        return amount;
+    }
+
+    public async Task<PaginatedResponse<TransactionDto>> GetAllAsync(string userId, TransactionFilterParams filters, string? targetCurrency = null)
     {
         filters = filters with
         {
@@ -26,28 +76,7 @@ public class TransactionService : ITransactionService
             PageSize = Math.Clamp(filters.PageSize, 1, 100),
         };
 
-        var query = _db.Transactions
-            .Include(t => t.Category)
-            .Where(t => t.UserId == userId)
-            .AsQueryable();
-
-        // Filter by type
-        if (!string.IsNullOrEmpty(filters.Type) && filters.Type != "all")
-        {
-            if (Enum.TryParse<TransactionType>(filters.Type, true, out var type))
-                query = query.Where(t => t.Type == type);
-        }
-
-        // Filter by date range
-        if (filters.StartDate.HasValue)
-            query = query.Where(t => t.Date >= filters.StartDate.Value);
-
-        if (filters.EndDate.HasValue)
-            query = query.Where(t => t.Date <= filters.EndDate.Value);
-
-        // Search by description
-        if (!string.IsNullOrWhiteSpace(filters.Search))
-            query = query.Where(t => t.Description.ToLower().Contains(filters.Search.ToLower()));
+        var query = BuildFilteredQuery(userId, filters);
 
         var totalCount = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalCount / (double)filters.PageSize);
@@ -58,12 +87,60 @@ public class TransactionService : ITransactionService
             .Take(filters.PageSize)
             .ToListAsync();
 
+        var dtos = _mapper.Map<List<TransactionDto>>(items);
+
+        if (!string.IsNullOrEmpty(targetCurrency))
+        {
+            var rate = await GetUsdToCrcRateAsync();
+            if (rate.HasValue)
+            {
+                dtos = dtos.Select(d => d with
+                {
+                    ConvertedAmount = ConvertAmount(d.Amount, d.Currency, targetCurrency, rate.Value),
+                    TargetCurrency = targetCurrency
+                }).ToList();
+            }
+        }
+
         return new PaginatedResponse<TransactionDto>(
-            Items: _mapper.Map<IEnumerable<TransactionDto>>(items),
+            Items: dtos,
             TotalCount: totalCount,
             Page: filters.Page,
             PageSize: filters.PageSize,
             TotalPages: totalPages
+        );
+    }
+
+    public async Task<TransactionBalanceDto> GetBalanceAsync(string userId, TransactionFilterParams filters, string targetCurrency)
+    {
+        var query = BuildFilteredQuery(userId, filters);
+
+        var transactions = await query
+            .Select(t => new { t.Currency, t.Amount, t.Type })
+            .ToListAsync();
+
+        var breakdown = transactions
+            .GroupBy(t => t.Currency.ToString())
+            .Select(g => new CurrencyBalance(
+                g.Key,
+                g.Sum(t => t.Type == TransactionType.Income ? t.Amount : -t.Amount)
+            ))
+            .ToList();
+
+        var rate = await GetUsdToCrcRateAsync();
+        var total = 0m;
+
+        foreach (var b in breakdown)
+        {
+            total += rate.HasValue
+                ? ConvertAmount(b.OriginalAmount, b.Currency, targetCurrency, rate.Value)
+                : b.OriginalAmount;
+        }
+
+        return new TransactionBalanceDto(
+            Math.Round(total, 2),
+            targetCurrency,
+            breakdown
         );
     }
 
