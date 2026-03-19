@@ -73,6 +73,10 @@ public record UpdateTransactionRequest(
     [Required] string Type
 );
 
+public record DeleteManyRequest(
+    [Required, MinLength(1)] long[] Ids
+);
+
 public record TransactionFilterParams(
     string? Type = null,
     DateTime? StartDate = null,

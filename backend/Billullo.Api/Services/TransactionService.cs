@@ -12,14 +12,14 @@ public class TransactionService : ITransactionService
     private readonly AppDbContext _db;
     private readonly IMapper _mapper;
     private readonly ICurrencyService _currencyService;
+    private readonly ILogger<TransactionService> _logger;
 
-    private const string BaseCurrency = "USD";
-
-    public TransactionService(AppDbContext db, IMapper mapper, ICurrencyService currencyService)
+    public TransactionService(AppDbContext db, IMapper mapper, ICurrencyService currencyService, ILogger<TransactionService> logger)
     {
         _db = db;
         _mapper = mapper;
         _currencyService = currencyService;
+        _logger = logger;
     }
 
     private IQueryable<Transaction> BuildFilteredQuery(string userId, TransactionFilterParams filters)
@@ -47,25 +47,41 @@ public class TransactionService : ITransactionService
         return query;
     }
 
-    private async Task<decimal?> GetUsdToCrcRateAsync()
+    /// <summary>
+    /// Builds a rate table for converting any known currency to <paramref name="targetCurrency"/>.
+    /// For each currency, first tries a direct rate; falls back to the inverse if not found.
+    /// Returns only pairs for which a rate exists.
+    /// </summary>
+    private async Task<Dictionary<string, decimal>> GetConversionRatesAsync(string targetCurrency)
     {
-        var rate = await _currencyService.GetLatestRateAsync(BaseCurrency, "CRC");
-        return rate?.Rate;
+        var rates = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var currency in Enum.GetNames<Currency>())
+        {
+            if (string.Equals(currency, targetCurrency, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var direct = await _currencyService.GetLatestRateAsync(currency, targetCurrency);
+            if (direct != null)
+            {
+                rates[currency] = direct.Rate;
+                continue;
+            }
+
+            var inverse = await _currencyService.GetLatestRateAsync(targetCurrency, currency);
+            if (inverse != null && inverse.Rate != 0)
+                rates[currency] = 1m / inverse.Rate;
+        }
+
+        return rates;
     }
 
-    private static decimal ConvertAmount(decimal amount, string fromCurrency, string targetCurrency, decimal usdToCrcRate)
+    private static decimal ConvertAmount(decimal amount, string fromCurrency, string targetCurrency, Dictionary<string, decimal> rates)
     {
-        if (fromCurrency == targetCurrency) return amount;
+        if (string.Equals(fromCurrency, targetCurrency, StringComparison.OrdinalIgnoreCase))
+            return amount;
 
-        // USD → CRC: multiply
-        if (fromCurrency == "USD" && targetCurrency == "CRC")
-            return amount * usdToCrcRate;
-
-        // CRC → USD: divide
-        if (fromCurrency == "CRC" && targetCurrency == "USD")
-            return usdToCrcRate == 0 ? amount : amount / usdToCrcRate;
-
-        return amount;
+        return rates.TryGetValue(fromCurrency, out var rate) ? amount * rate : amount;
     }
 
     public async Task<PaginatedResponse<TransactionDto>> GetAllAsync(string userId, TransactionFilterParams filters, string? targetCurrency = null)
@@ -91,15 +107,12 @@ public class TransactionService : ITransactionService
 
         if (!string.IsNullOrEmpty(targetCurrency))
         {
-            var rate = await GetUsdToCrcRateAsync();
-            if (rate.HasValue)
+            var rates = await GetConversionRatesAsync(targetCurrency);
+            dtos = dtos.Select(d => d with
             {
-                dtos = dtos.Select(d => d with
-                {
-                    ConvertedAmount = ConvertAmount(d.Amount, d.Currency, targetCurrency, rate.Value),
-                    TargetCurrency = targetCurrency
-                }).ToList();
-            }
+                ConvertedAmount = ConvertAmount(d.Amount, d.Currency, targetCurrency, rates),
+                TargetCurrency = targetCurrency
+            }).ToList();
         }
 
         return new PaginatedResponse<TransactionDto>(
@@ -127,14 +140,12 @@ public class TransactionService : ITransactionService
             ))
             .ToList();
 
-        var rate = await GetUsdToCrcRateAsync();
+        var rates = await GetConversionRatesAsync(targetCurrency);
         var total = 0m;
 
         foreach (var b in breakdown)
         {
-            total += rate.HasValue
-                ? ConvertAmount(b.OriginalAmount, b.Currency, targetCurrency, rate.Value)
-                : b.OriginalAmount;
+            total += ConvertAmount(b.OriginalAmount, b.Currency, targetCurrency, rates);
         }
 
         return new TransactionBalanceDto(
@@ -166,6 +177,8 @@ public class TransactionService : ITransactionService
 
         _db.Transactions.Add(transaction);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Transaction created for user {UserId}: {Amount} {Currency}", userId, transaction.Amount, transaction.Currency);
 
         // Reload with navigation properties
         var created = await _db.Transactions
@@ -207,7 +220,22 @@ public class TransactionService : ITransactionService
 
         _db.Transactions.Remove(transaction);
         await _db.SaveChangesAsync();
+        _logger.LogInformation("Transaction {Id} deleted for user {UserId}", id, userId);
         return true;
+    }
+
+    public async Task<int> DeleteManyAsync(string userId, long[] ids)
+    {
+        var transactions = await _db.Transactions
+            .Where(t => t.UserId == userId && ids.Contains(t.Id))
+            .ToListAsync();
+
+        if (transactions.Count == 0) return 0;
+
+        _db.Transactions.RemoveRange(transactions);
+        await _db.SaveChangesAsync();
+        _logger.LogInformation("Deleted {Count} transactions for user {UserId}", transactions.Count, userId);
+        return transactions.Count;
     }
 
     private static void ValidateEnums(string currency, string type)

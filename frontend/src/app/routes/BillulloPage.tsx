@@ -15,6 +15,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import type {
   GridColDef,
   GridRenderCellParams,
+  GridRowSelectionModel,
   GridSortModel,
 } from "@mui/x-data-grid";
 import dayjs from "dayjs";
@@ -26,6 +27,7 @@ import CategoryChip from "@/features/categories/components/CategoryChip/Category
 import type { FilterValues } from "@/features/transactions/components/TransactionFilters/TransactionFilters";
 import ConfirmDialog from "@/shared/components/ConfirmDialog/ConfirmDialog";
 import { useNotification } from "@/shared/components/NotificationProvider/NotificationProvider";
+import { useConfirmDelete } from "@/shared/hooks/useConfirmDelete";
 import BalanceSummary from "@/features/transactions/components/BalanceSummary/BalanceSummary";
 import { DATE_TIME_FORMAT } from "@/shared/constants";
 import { formatCurrency } from "@/shared/utils/currency";
@@ -130,7 +132,7 @@ function useTransactionColumns(
               <IconButton
                 size="small"
                 aria-label="Delete transaction"
-                onClick={() => onDelete(params.row.id)}
+                onClick={() => params.row.id != null && onDelete(params.row.id)}
                 color="error"
               >
                 <DeleteIcon fontSize="small" />
@@ -182,6 +184,7 @@ const BillulloPage = observer(() => {
     (newFilters: FilterValues) => {
       const prev = prevFiltersRef.current;
       setFilters(newFilters);
+      clearSelection();
       prevFiltersRef.current = newFilters;
 
       const syncToStore = () => {
@@ -214,8 +217,44 @@ const BillulloPage = observer(() => {
   const [editingTransaction, setEditingTransaction] = useState<
     TransactionDto | undefined
   >();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<number | string | null>(null);
+  const {
+    isOpen: deleteDialogOpen,
+    requestDelete: handleDeleteClick,
+    handleConfirm: handleDeleteConfirm,
+    handleClose: handleDeleteClose,
+  } = useConfirmDelete(
+    (id) => transactionStore.deleteTransaction(id),
+    "Failed to delete transaction",
+  );
+
+  const [selectionModel, setSelectionModel] = useState<GridRowSelectionModel>({
+    type: "include",
+    ids: new Set(),
+  });
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
+  const selectedIds =
+    selectionModel.type === "include"
+      ? ([...selectionModel.ids] as (number | string)[])
+      : (transactionStore.transactions
+          .map((t) => t.id)
+          .filter((id): id is number => id != null && !selectionModel.ids.has(id)));
+
+  const clearSelection = useCallback(
+    () => setSelectionModel({ type: "include", ids: new Set() }),
+    [],
+  );
+
+  const handleBulkDeleteConfirm = useCallback(async () => {
+    try {
+      await transactionStore.deleteTransactions(selectedIds);
+      clearSelection();
+    } catch (e) {
+      notify(e instanceof Error ? e.message : "Failed to delete transactions");
+    }
+    setBulkDeleteOpen(false);
+  }, [selectedIds, transactionStore, clearSelection, notify]);
+
   const [sortModel, setSortModel] = useState<GridSortModel>([
     { field: "date", sort: "desc" },
   ]);
@@ -229,25 +268,6 @@ const BillulloPage = observer(() => {
     setEditingTransaction(transaction);
     setDialogOpen(true);
   }, []);
-
-  const handleDeleteClick = useCallback((id: number | string) => {
-    setDeletingId(id);
-    setDeleteDialogOpen(true);
-  }, []);
-
-  const handleDeleteConfirm = useCallback(async () => {
-    if (deletingId) {
-      try {
-        await transactionStore.deleteTransaction(deletingId);
-      } catch (e) {
-        notify(
-          e instanceof Error ? e.message : "Failed to delete transaction",
-        );
-      }
-      setDeleteDialogOpen(false);
-      setDeletingId(null);
-    }
-  }, [deletingId, transactionStore, notify]);
 
   const columns = useTransactionColumns(handleEdit, handleDeleteClick);
 
@@ -275,12 +295,48 @@ const BillulloPage = observer(() => {
 
       <BalanceSummary />
 
+      {selectedIds.length > 0 && (
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          sx={{
+            mb: 1,
+            px: 2,
+            py: 1,
+            bgcolor: "error.50",
+            border: 1,
+            borderColor: "error.200",
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="body2" sx={{ flex: 1 }}>
+            {selectedIds.length} transaction{selectedIds.length !== 1 ? "s" : ""} selected
+          </Typography>
+          <Button
+            size="small"
+            color="error"
+            variant="contained"
+            startIcon={<DeleteIcon />}
+            onClick={() => setBulkDeleteOpen(true)}
+          >
+            Delete selected
+          </Button>
+          <Button size="small" onClick={clearSelection}>
+            Clear
+          </Button>
+        </Stack>
+      )}
+
       <Box sx={{ width: "100%" }}>
         <DataGrid
           rows={transactionStore.transactions}
           columns={columns}
           sortModel={sortModel}
           onSortModelChange={setSortModel}
+          checkboxSelection
+          rowSelectionModel={selectionModel}
+          onRowSelectionModelChange={setSelectionModel}
           paginationMode="server"
           rowCount={transactionStore.totalCount}
           paginationModel={{
@@ -291,6 +347,7 @@ const BillulloPage = observer(() => {
             transactionStore.setPage(model.page + 1);
             transactionStore.setPageSize(model.pageSize);
             transactionStore.loadFromApi(preferenceStore.preferredCurrency);
+            clearSelection();
           }}
           pageSizeOptions={[10, 25, 50]}
           loading={transactionStore.isLoading}
@@ -317,10 +374,18 @@ const BillulloPage = observer(() => {
 
       <ConfirmDialog
         open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        onClose={handleDeleteClose}
         onConfirm={handleDeleteConfirm}
         title="Delete Transaction"
         description="Are you sure you want to delete this transaction? This action cannot be undone."
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        title={`Delete ${selectedIds.length} transaction${selectedIds.length !== 1 ? "s" : ""}`}
+        description={`Are you sure you want to delete ${selectedIds.length} transaction${selectedIds.length !== 1 ? "s" : ""}? This action cannot be undone.`}
       />
     </Box>
   );

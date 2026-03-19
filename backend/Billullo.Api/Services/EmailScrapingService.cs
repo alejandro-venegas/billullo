@@ -353,7 +353,8 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
     {
         var sender = message.From.Mailboxes.FirstOrDefault()?.Address ?? string.Empty;
         var subject = message.Subject ?? string.Empty;
-        var body = message.TextBody ?? message.HtmlBody ?? string.Empty;
+        var rawBody = message.TextBody ?? message.HtmlBody ?? string.Empty;
+        var body = rawBody.Length > 3000 ? rawBody[..3000] : rawBody;
 
         foreach (var rule in parsingRules)
         {

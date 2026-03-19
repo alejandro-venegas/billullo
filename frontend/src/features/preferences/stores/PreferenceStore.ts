@@ -1,27 +1,23 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import { authApi } from "@/api/apiConfig";
+import { withLoading, extractErrorMessage } from "@/shared/stores/storeUtils";
 
 export class PreferenceStore {
   preferredCurrency = "USD";
   isLoading = false;
+  error: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
   }
 
   async loadFromApi() {
-    this.isLoading = true;
-    try {
+    await withLoading(this, async () => {
       const user = await authApi.authGetPreferences();
       runInAction(() => {
         this.preferredCurrency = user.preferredCurrency ?? "USD";
-        this.isLoading = false;
       });
-    } catch {
-      runInAction(() => {
-        this.isLoading = false;
-      });
-    }
+    });
   }
 
   async setPreferredCurrency(currency: string) {
@@ -30,9 +26,10 @@ export class PreferenceStore {
 
     try {
       await authApi.authUpdatePreferences({ preferredCurrency: currency });
-    } catch {
+    } catch (e) {
       runInAction(() => {
         this.preferredCurrency = previous;
+        this.error = extractErrorMessage(e, "Failed to update currency");
       });
     }
   }

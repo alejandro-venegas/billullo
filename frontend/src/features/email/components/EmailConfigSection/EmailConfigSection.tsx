@@ -18,7 +18,7 @@ import { useNotification } from "@/shared/components/NotificationProvider/Notifi
 const EmailConfigSection = observer(() => {
   const { emailConfigStore } = useStore();
   const { notify } = useNotification();
-  const cfg = emailConfigStore.config;
+  const config = emailConfigStore.config;
 
   const [imapHost, setImapHost] = useState("");
   const [imapPort, setImapPort] = useState("993");
@@ -37,15 +37,15 @@ const EmailConfigSection = observer(() => {
 
   // Sync form when config loads
   useEffect(() => {
-    if (cfg) {
-      setImapHost(cfg.imapHost);
-      setImapPort(String(cfg.imapPort));
-      setEmailAddress(cfg.emailAddress);
+    if (config) {
+      setImapHost(config.imapHost);
+      setImapPort(String(config.imapPort));
+      setEmailAddress(config.emailAddress);
       setPassword(""); // never pre-fill password
-      setUseSsl(cfg.useSsl);
-      setEnabled(cfg.enabled);
+      setUseSsl(config.useSsl);
+      setEnabled(config.enabled);
     }
-  }, [cfg]);
+  }, [config]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -163,12 +163,12 @@ const EmailConfigSection = observer(() => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={
-            cfg?.hasPassword ? "••••••••  (leave blank to keep)" : ""
+            config?.hasPassword ? "••••••••  (leave blank to keep)" : ""
           }
           fullWidth
           size="small"
           helperText={
-            cfg?.hasPassword
+            config?.hasPassword
               ? "A password is saved. Leave blank to keep it unchanged."
               : undefined
           }
@@ -211,7 +211,7 @@ const EmailConfigSection = observer(() => {
           >
             Test Connection
           </Button>
-          {cfg && (
+          {config && (
             <Button
               variant="outlined"
               color="error"

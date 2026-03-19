@@ -13,8 +13,8 @@ public class CurrencyService(
     AppDbContext db,
     ILogger<CurrencyService> logger) : ICurrencyService
 {
-    private static readonly string[] TrackedCurrencies = ["CRC"];
-    private const string BaseCurrency = "USD";
+    private string BaseCurrency => configuration["ExchangeRateApi:BaseCurrency"] ?? "USD";
+    private string[] TrackedCurrencies => configuration.GetSection("ExchangeRateApi:TrackedCurrencies").Get<string[]>() ?? ["CRC"];
 
     public async Task FetchAndStoreRatesAsync(CancellationToken cancellationToken = default)
     {

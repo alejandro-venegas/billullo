@@ -89,4 +89,9 @@ export class TransactionStore {
     await transactionsApi.transactionsDelete(id);
     await this.loadFromApi();
   }
+
+  async deleteTransactions(ids: (number | string)[]) {
+    await transactionsApi.transactionsDeleteMany({ ids: ids.map(Number) });
+    await this.loadFromApi();
+  }
 }

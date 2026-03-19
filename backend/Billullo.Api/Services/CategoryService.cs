@@ -11,11 +11,13 @@ public class CategoryService : ICategoryService
 {
     private readonly AppDbContext _db;
     private readonly IMapper _mapper;
+    private readonly ILogger<CategoryService> _logger;
 
-    public CategoryService(AppDbContext db, IMapper mapper)
+    public CategoryService(AppDbContext db, IMapper mapper, ILogger<CategoryService> logger)
     {
         _db = db;
         _mapper = mapper;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<CategoryDto>> GetAllAsync(string userId)
@@ -76,6 +78,7 @@ public class CategoryService : ICategoryService
         _db.Categories.Add(category);
         await _db.SaveChangesAsync();
 
+        _logger.LogInformation("Category '{Name}' created for user {UserId}", category.Name, userId);
         return (await GetByIdAsync(userId, category.Id))!;
     }
 
@@ -98,6 +101,7 @@ public class CategoryService : ICategoryService
         _mapper.Map(request, category);
         await _db.SaveChangesAsync();
 
+        _logger.LogInformation("Category {Id} updated for user {UserId}", id, userId);
         return await GetByIdAsync(userId, id);
     }
 
@@ -110,6 +114,7 @@ public class CategoryService : ICategoryService
 
         _db.Categories.Remove(category);
         await _db.SaveChangesAsync();
+        _logger.LogInformation("Category {Id} deleted for user {UserId}", id, userId);
         return true;
     }
 

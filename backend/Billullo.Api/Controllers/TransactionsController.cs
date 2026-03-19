@@ -69,4 +69,11 @@ public class TransactionsController : AuthorizedControllerBase
         var deleted = await _service.DeleteAsync(UserId, id);
         return deleted ? NoContent() : NotFound();
     }
+
+    [HttpDelete("bulk")]
+    public async Task<IActionResult> DeleteMany([FromBody] DeleteManyRequest request)
+    {
+        var count = await _service.DeleteManyAsync(UserId, request.Ids);
+        return Ok(new { Deleted = count });
+    }
 }

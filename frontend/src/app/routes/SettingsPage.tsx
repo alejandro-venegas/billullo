@@ -18,9 +18,8 @@ import type { CategoryTreeActions } from "@/features/categories/components/Categ
 import ConfirmDialog from "@/shared/components/ConfirmDialog/ConfirmDialog";
 import EmailConfigSection from "@/features/email/components/EmailConfigSection/EmailConfigSection";
 import EmailParsingRulesSection from "@/features/email/components/EmailParsingRulesSection/EmailParsingRulesSection";
-import { useNotification } from "@/shared/components/NotificationProvider/NotificationProvider";
-
-const CURRENCIES = ["USD", "CRC"];
+import { CURRENCIES } from "@/shared/constants";
+import { useConfirmDelete } from "@/shared/hooks/useConfirmDelete";
 
 interface TabPanelProps {
   children: React.ReactNode;
@@ -38,7 +37,6 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 
 const SettingsPage = observer(() => {
   const { categoryStore, ruleStore, preferenceStore } = useStore();
-  const { notify } = useNotification();
   const [tab, setTab] = useState(0);
 
   // Category dialog state
@@ -53,14 +51,27 @@ const SettingsPage = observer(() => {
   const [editingRule, setEditingRule] = useState<CategoryRuleDto | undefined>();
   const [ruleTargetCategoryId, setRuleTargetCategoryId] = useState<string>("");
 
-  // Delete category confirmation
-  const [deleteCatDialogOpen, setDeleteCatDialogOpen] = useState(false);
-  const [deletingCatId, setDeletingCatId] = useState<number | string | null>(null);
   const [deletingCatInUse, setDeletingCatInUse] = useState(false);
 
-  // Delete rule confirmation
-  const [deleteRuleDialogOpen, setDeleteRuleDialogOpen] = useState(false);
-  const [deletingRuleId, setDeletingRuleId] = useState<number | string | null>(null);
+  const {
+    isOpen: deleteCatDialogOpen,
+    requestDelete: requestDeleteCategory,
+    handleConfirm: handleDeleteCategoryConfirm,
+    handleClose: handleDeleteCatClose,
+  } = useConfirmDelete(
+    (id) => categoryStore.deleteCategory(id),
+    "Failed to delete category",
+  );
+
+  const {
+    isOpen: deleteRuleDialogOpen,
+    requestDelete: handleDeleteRuleClick,
+    handleConfirm: handleDeleteRuleConfirm,
+    handleClose: handleDeleteRuleClose,
+  } = useConfirmDelete(
+    (id) => ruleStore.deleteRule(id),
+    "Failed to delete rule",
+  );
 
   // --- Category handlers ---
   const handleCreateCategory = useCallback(() => {
@@ -94,24 +105,9 @@ const SettingsPage = observer(() => {
   };
 
   const handleDeleteCategoryClick = useCallback((id: number | string) => {
-    setDeletingCatId(id);
     setDeletingCatInUse(categoryStore.isCategoryInUse(id));
-    setDeleteCatDialogOpen(true);
-  }, [categoryStore]);
-
-  const handleDeleteCategoryConfirm = useCallback(async () => {
-    if (deletingCatId) {
-      try {
-        await categoryStore.deleteCategory(deletingCatId);
-      } catch (e) {
-        notify(
-          e instanceof Error ? e.message : "Failed to delete category",
-        );
-      }
-      setDeleteCatDialogOpen(false);
-      setDeletingCatId(null);
-    }
-  }, [deletingCatId, categoryStore, notify]);
+    requestDeleteCategory(id);
+  }, [categoryStore, requestDeleteCategory]);
 
   // --- Rule handlers ---
   const handleCreateRule = useCallback((categoryId: number | string) => {
@@ -125,25 +121,6 @@ const SettingsPage = observer(() => {
     setRuleTargetCategoryId(String(rule.categoryId));
     setRuleDialogOpen(true);
   }, []);
-
-  const handleDeleteRuleClick = useCallback((id: number | string) => {
-    setDeletingRuleId(id);
-    setDeleteRuleDialogOpen(true);
-  }, []);
-
-  const handleDeleteRuleConfirm = useCallback(async () => {
-    if (deletingRuleId) {
-      try {
-        await ruleStore.deleteRule(deletingRuleId);
-      } catch (e) {
-        notify(
-          e instanceof Error ? e.message : "Failed to delete rule",
-        );
-      }
-      setDeleteRuleDialogOpen(false);
-      setDeletingRuleId(null);
-    }
-  }, [deletingRuleId, ruleStore, notify]);
 
   const categoryTreeActions: CategoryTreeActions = useMemo(() => ({
     getChildren: (id: number | string) => categoryStore.getChildren(id),
@@ -270,7 +247,7 @@ const SettingsPage = observer(() => {
 
       <ConfirmDialog
         open={deleteCatDialogOpen}
-        onClose={() => setDeleteCatDialogOpen(false)}
+        onClose={handleDeleteCatClose}
         onConfirm={handleDeleteCategoryConfirm}
         title="Delete Category"
         description="Are you sure you want to delete this category? All subcategories and associated auto-categorization rules will also be deleted."
@@ -283,7 +260,7 @@ const SettingsPage = observer(() => {
 
       <ConfirmDialog
         open={deleteRuleDialogOpen}
-        onClose={() => setDeleteRuleDialogOpen(false)}
+        onClose={handleDeleteRuleClose}
         onConfirm={handleDeleteRuleConfirm}
         title="Delete Rule"
         description="Are you sure you want to delete this auto-categorization rule?"

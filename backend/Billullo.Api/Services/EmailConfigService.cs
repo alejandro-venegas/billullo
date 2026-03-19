@@ -153,9 +153,10 @@ public class EmailConfigService : IEmailConfigService
                 var message = await inbox.GetMessageAsync(uid);
                 var sender = message.From.Mailboxes.FirstOrDefault()?.Address ?? string.Empty;
                 var subject = message.Subject ?? string.Empty;
-                var body = message.TextBody ?? message.HtmlBody ?? string.Empty;
+                var rawBody = message.TextBody ?? message.HtmlBody ?? string.Empty;
+                var body = rawBody.Length > 3000 ? rawBody[..3000] : rawBody;
 
-                var bodyPreview = body.Length > 500 ? body[..500] + "..." : body;
+                var bodyPreview = rawBody.Length > 500 ? rawBody[..500] + "..." : rawBody;
 
                 ParsedTransactionPreview? parsed = null;
                 var matchLog = new List<string>();

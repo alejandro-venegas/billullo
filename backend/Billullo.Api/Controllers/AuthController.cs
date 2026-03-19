@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using AutoMapper;
 using Billullo.Api.DTOs;
 using Billullo.Api.Models;
@@ -9,9 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Billullo.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : AuthorizedControllerBase
 {
     private readonly IAuthService _authService;
     private readonly UserManager<AppUser> _userManager;
@@ -24,6 +22,7 @@ public class AuthController : ControllerBase
         _mapper = mapper;
     }
 
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request)
     {
@@ -31,6 +30,7 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request)
     {
@@ -38,6 +38,7 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<ActionResult<AuthResponse>> Refresh([FromBody] RefreshRequest request)
     {
@@ -45,6 +46,7 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
+    [AllowAnonymous]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] RefreshRequest request)
     {
@@ -52,22 +54,18 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
-    [Authorize]
     [HttpGet("preferences")]
     public async Task<ActionResult<UserDto>> GetPreferences()
     {
-        var user = await _userManager.FindByIdAsync(
-            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _userManager.FindByIdAsync(UserId);
         if (user == null) return Unauthorized();
         return Ok(_mapper.Map<UserDto>(user));
     }
 
-    [Authorize]
     [HttpPatch("preferences")]
     public async Task<ActionResult<UserDto>> UpdatePreferences([FromBody] UpdatePreferencesRequest request)
     {
-        var user = await _userManager.FindByIdAsync(
-            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _userManager.FindByIdAsync(UserId);
         if (user == null) return Unauthorized();
 
         user.PreferredCurrency = request.PreferredCurrency;

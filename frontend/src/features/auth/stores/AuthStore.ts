@@ -91,10 +91,10 @@ export class AuthStore {
   }
 
   async logout() {
-    const rt = getRefreshToken();
-    if (rt) {
+    const refreshToken = getRefreshToken();
+    if (refreshToken) {
       try {
-        await authApi.authLogout({ refreshToken: rt });
+        await authApi.authLogout({ refreshToken });
       } catch {
         // Ignore errors on logout
       }

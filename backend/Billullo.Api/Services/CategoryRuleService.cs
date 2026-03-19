@@ -12,11 +12,13 @@ public class CategoryRuleService : ICategoryRuleService
 {
     private readonly AppDbContext _db;
     private readonly IMapper _mapper;
+    private readonly ILogger<CategoryRuleService> _logger;
 
-    public CategoryRuleService(AppDbContext db, IMapper mapper)
+    public CategoryRuleService(AppDbContext db, IMapper mapper, ILogger<CategoryRuleService> logger)
     {
         _db = db;
         _mapper = mapper;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<CategoryRuleDto>> GetAllAsync(string userId)
@@ -130,11 +132,11 @@ public class CategoryRuleService : ICategoryRuleService
             }
             catch (RegexMatchTimeoutException)
             {
-                // Skip rules that take too long (potential ReDoS)
+                _logger.LogWarning("Regex timeout for rule {RuleId} (pattern: {Pattern}) — skipping", rule.Id, rule.Pattern);
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
-                // Skip invalid regex patterns
+                _logger.LogWarning("Invalid regex in rule {RuleId} (pattern: {Pattern}): {Error} — skipping", rule.Id, rule.Pattern, ex.Message);
             }
         }
 

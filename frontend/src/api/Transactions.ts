@@ -151,4 +151,23 @@ export class Transactions<
       method: "DELETE",
       ...params,
     });
+  /**
+   * No description
+   *
+   * @tags Transactions
+   * @name TransactionsDeleteMany
+   * @request DELETE:/api/Transactions
+   */
+  transactionsDeleteMany = (
+    data: { ids: number[] },
+    params: RequestParams = {},
+  ) =>
+    this.request<{ deleted: number }, any>({
+      path: `/api/Transactions/bulk`,
+      method: "DELETE",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
 }
