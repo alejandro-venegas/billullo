@@ -15,6 +15,7 @@ export class TransactionStore {
   startDate: string | null = null;
   endDate: string | null = null;
   search = "";
+  accountFilter: number[] = [];
 
   constructor() {
     makeAutoObservable(this);
@@ -25,11 +26,13 @@ export class TransactionStore {
     startDate?: string | null;
     endDate?: string | null;
     search?: string;
+    accountFilter?: number[];
   }) {
     if (filters.typeFilter !== undefined) this.typeFilter = filters.typeFilter;
     if (filters.startDate !== undefined) this.startDate = filters.startDate;
     if (filters.endDate !== undefined) this.endDate = filters.endDate;
     if (filters.search !== undefined) this.search = filters.search;
+    if (filters.accountFilter !== undefined) this.accountFilter = filters.accountFilter;
     this.page = 1;
   }
 
@@ -51,6 +54,7 @@ export class TransactionStore {
         startDate: this.startDate ?? undefined,
         endDate: this.endDate ?? undefined,
         search: this.search || undefined,
+        accountIds: this.accountFilter.length > 0 ? this.accountFilter : undefined,
         targetCurrency: targetCurrency || undefined,
       });
       this.transactions = data.items ?? [];

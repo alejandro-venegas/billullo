@@ -54,6 +54,15 @@ function useTransactionColumns(
         minWidth: 200,
       },
       {
+        field: "accountName",
+        headerName: "Account",
+        width: 140,
+        renderCell: (params: GridRenderCellParams<TransactionDto>) => {
+          const name = params.row.accountName;
+          return name ? <span>{name}</span> : null;
+        },
+      },
+      {
         field: "categoryName",
         headerName: "Category",
         width: 180,
@@ -63,7 +72,9 @@ function useTransactionColumns(
         renderCell: (params: GridRenderCellParams<TransactionDto>) =>
           params.row.categoryId ? (
             <CategoryChip categoryId={params.row.categoryId} />
-          ) : null,
+          ) : (
+            <Chip label="Unknown" size="small" variant="outlined" sx={{ color: "text.secondary", borderColor: "text.secondary" }} />
+          ),
       },
       {
         field: "amount",
@@ -155,6 +166,7 @@ const BillulloPage = observer(() => {
     startDate: null,
     endDate: null,
     search: "",
+    accountIds: [],
   });
 
   useEffect(() => {
@@ -193,6 +205,7 @@ const BillulloPage = observer(() => {
           startDate: newFilters.startDate?.toISOString() ?? null,
           endDate: newFilters.endDate?.toISOString() ?? null,
           search: newFilters.search,
+          accountFilter: newFilters.accountIds,
         });
         transactionStore.loadFromApi(preferenceStore.preferredCurrency);
       };
@@ -201,7 +214,8 @@ const BillulloPage = observer(() => {
         newFilters.search !== prev.search &&
         newFilters.typeFilter === prev.typeFilter &&
         newFilters.startDate === prev.startDate &&
-        newFilters.endDate === prev.endDate;
+        newFilters.endDate === prev.endDate &&
+        newFilters.accountIds === prev.accountIds;
 
       clearTimeout(searchTimeoutRef.current);
       if (onlySearchChanged) {
@@ -291,9 +305,9 @@ const BillulloPage = observer(() => {
         </Button>
       </Stack>
 
-      <TransactionFilters filters={filters} onChange={handleFilterChange} />
-
       <BalanceSummary />
+
+      <TransactionFilters filters={filters} onChange={handleFilterChange} />
 
       {selectedIds.length > 0 && (
         <Stack

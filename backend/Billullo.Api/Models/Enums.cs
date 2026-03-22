@@ -15,5 +15,6 @@ public enum Currency
 public enum TransactionSource
 {
     Manual,
-    Email
+    Email,
+    Adjustment
 }

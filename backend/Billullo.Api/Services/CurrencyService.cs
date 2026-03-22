@@ -75,6 +75,17 @@ public class CurrencyService(
             .FirstOrDefaultAsync();
     }
 
+    public async Task<ExchangeRate?> GetRateNearestToDateAsync(string baseCurrency, string quoteCurrency, DateTime targetDate)
+    {
+        // Find the rate with the smallest time distance to the target date
+        var nearest = await db.ExchangeRates
+            .Where(er => er.BaseCurrency == baseCurrency && er.QuoteCurrency == quoteCurrency)
+            .OrderBy(er => er.FetchedAt > targetDate ? er.FetchedAt - targetDate : targetDate - er.FetchedAt)
+            .FirstOrDefaultAsync();
+
+        return nearest ?? await GetLatestRateAsync(baseCurrency, quoteCurrency);
+    }
+
     private sealed class ExchangeRateApiResponse
     {
         [JsonPropertyName("result")]

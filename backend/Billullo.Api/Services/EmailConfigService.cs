@@ -146,6 +146,10 @@ public class EmailConfigService : IEmailConfigService
                 .OrderBy(r => r.Priority)
                 .ToListAsync();
 
+            var accounts = await _db.Accounts
+                .Where(a => a.UserId == userId)
+                .ToListAsync();
+
             var emails = new List<ScrapedEmail>();
 
             foreach (var uid in recentUids)
@@ -153,10 +157,9 @@ public class EmailConfigService : IEmailConfigService
                 var message = await inbox.GetMessageAsync(uid);
                 var sender = message.From.Mailboxes.FirstOrDefault()?.Address ?? string.Empty;
                 var subject = message.Subject ?? string.Empty;
-                var rawBody = message.TextBody ?? message.HtmlBody ?? string.Empty;
-                var body = rawBody.Length > 3000 ? rawBody[..3000] : rawBody;
+                var body = message.TextBody ?? message.HtmlBody ?? string.Empty;
 
-                var bodyPreview = rawBody.Length > 500 ? rawBody[..500] + "..." : rawBody;
+                var bodyPreview = body.Length > 500 ? body[..500] + "..." : body;
 
                 ParsedTransactionPreview? parsed = null;
                 var matchLog = new List<string>();
@@ -202,13 +205,24 @@ public class EmailConfigService : IEmailConfigService
                         var currency = rule.CurrencyFixed?.ToString() ?? result.Currency;
                         var description = rule.DescriptionFixed ?? result.Description;
 
-                        matchLog.Add($"Rule '{rule.Name}': MATCHED — amount={result.Amount}, date={result.Date}, currency={currency}, desc={description}");
+                        var matchedAccount = accounts
+                            .Where(a => !string.IsNullOrEmpty(a.Identifier))
+                            .FirstOrDefault(a =>
+                            {
+                                try { return Regex.IsMatch(body, a.Identifier!, RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1)); }
+                                catch { return false; }
+                            })
+                            ?? accounts.FirstOrDefault(a => a.IsDefault);
+
+                        matchLog.Add($"Rule '{rule.Name}': MATCHED — amount={result.Amount}, date={result.Date}, currency={currency}, desc={description}, account={matchedAccount?.Name ?? "none"}");
                         parsed = new ParsedTransactionPreview(
                             Amount: result.Amount,
                             Date: result.Date,
                             Currency: currency,
                             Description: description,
-                            MatchedRuleName: rule.Name
+                            MatchedRuleName: rule.Name,
+                            AccountId: matchedAccount?.Id,
+                            AccountName: matchedAccount?.Name
                         );
                         break;
                     }

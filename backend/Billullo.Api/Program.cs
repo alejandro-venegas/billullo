@@ -69,6 +69,7 @@ builder.Services.AddScoped<ICategoryRuleService, CategoryRuleService>();
 builder.Services.AddScoped<IEmailConfigService, EmailConfigService>();
 builder.Services.AddScoped<IEmailParsingRuleService, EmailParsingRuleService>();
 builder.Services.AddScoped<IEmailParserService, AiEmailParserService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 // ── OpenAI ──
 var openAiApiKey = builder.Configuration["OpenAi:ApiKey"]

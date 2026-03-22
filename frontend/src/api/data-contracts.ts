@@ -242,6 +242,9 @@ export interface TransactionDto {
   currency?: string;
   type?: string;
   source?: string;
+  /** @format int64 */
+  accountId?: number;
+  accountName?: string | null;
   /** @format date-time */
   createdAt?: string;
   /** @format date-time */
@@ -274,6 +277,8 @@ export interface CreateTransactionRequest {
   amount?: number;
   currency?: string;
   type?: string;
+  /** @format int64 */
+  accountId?: number | null;
 }
 
 export interface UpdateTransactionRequest {
@@ -286,4 +291,53 @@ export interface UpdateTransactionRequest {
   amount?: number;
   currency?: string;
   type?: string;
+  /** @format int64 */
+  accountId?: number | null;
+}
+
+// ── Account ──
+
+export interface AccountDto {
+  /** @format int64 */
+  id?: number;
+  name?: string;
+  description?: string | null;
+  identifier?: string | null;
+  color?: string;
+  currencies?: string[] | null;
+  fallbackCurrency?: string | null;
+  isDefault?: boolean;
+  /** @format int32 */
+  transactionCount?: number;
+}
+
+export interface CreateAccountRequest {
+  name?: string;
+  description?: string | null;
+  identifier?: string | null;
+  color?: string | null;
+  currencies?: string[] | null;
+  fallbackCurrency?: string | null;
+}
+
+export interface UpdateAccountRequest {
+  name?: string;
+  description?: string | null;
+  identifier?: string | null;
+  color?: string | null;
+  currencies?: string[] | null;
+  fallbackCurrency?: string | null;
+}
+
+export interface DeleteAccountRequest {
+  deleteTransactions?: boolean;
+  /** @format int64 */
+  targetAccountId?: number | null;
+}
+
+export interface AdjustBalanceRequest {
+  currency?: string;
+  /** @format decimal */
+  newBalance?: number;
+  visible?: boolean;
 }

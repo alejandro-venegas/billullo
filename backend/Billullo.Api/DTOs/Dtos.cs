@@ -49,6 +49,8 @@ public record TransactionDto
     public string Currency { get; init; } = default!;
     public string Type { get; init; } = default!;
     public string Source { get; init; } = default!;
+    public long AccountId { get; init; }
+    public string? AccountName { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
     public decimal? ConvertedAmount { get; init; }
@@ -61,7 +63,8 @@ public record CreateTransactionRequest(
     long? CategoryId,
     [Required] decimal Amount,
     [Required] string Currency,
-    [Required] string Type
+    [Required] string Type,
+    long? AccountId = null
 );
 
 public record UpdateTransactionRequest(
@@ -70,7 +73,8 @@ public record UpdateTransactionRequest(
     long? CategoryId,
     [Required] decimal Amount,
     [Required] string Currency,
-    [Required] string Type
+    [Required] string Type,
+    long? AccountId = null
 );
 
 public record DeleteManyRequest(
@@ -82,6 +86,7 @@ public record TransactionFilterParams(
     DateTime? StartDate = null,
     DateTime? EndDate = null,
     string? Search = null,
+    long[]? AccountIds = null,
     int Page = 1,
     int PageSize = 25
 );
@@ -240,6 +245,7 @@ public record TestEmailParsingResult(
     DateTime? Date,
     string? Currency,
     string? Description,
+    long? AccountId,
     string? Error
 );
 
@@ -266,5 +272,51 @@ public record ParsedTransactionPreview(
     DateTime? Date,
     string? Currency,
     string? Description,
-    string MatchedRuleName
+    string MatchedRuleName,
+    long? AccountId,
+    string? AccountName
+);
+
+// ── Account ──
+
+public record AccountDto
+{
+    public long Id { get; init; }
+    public string Name { get; init; } = default!;
+    public string? Description { get; init; }
+    public string? Identifier { get; init; }
+    public string Color { get; init; } = default!;
+    public string[]? Currencies { get; init; }
+    public string? FallbackCurrency { get; init; }
+    public bool IsDefault { get; init; }
+    public int TransactionCount { get; init; }
+}
+
+public record CreateAccountRequest(
+    [Required, MaxLength(100)] string Name,
+    [MaxLength(500)] string? Description,
+    [MaxLength(500)] string? Identifier,
+    [MaxLength(7)] string? Color,
+    string[]? Currencies,
+    string? FallbackCurrency
+);
+
+public record UpdateAccountRequest(
+    [Required, MaxLength(100)] string Name,
+    [MaxLength(500)] string? Description,
+    [MaxLength(500)] string? Identifier,
+    [MaxLength(7)] string? Color,
+    string[]? Currencies,
+    string? FallbackCurrency
+);
+
+public record DeleteAccountRequest(
+    bool DeleteTransactions = false,
+    long? TargetAccountId = null
+);
+
+public record AdjustBalanceRequest(
+    [Required] string Currency,
+    [Required] decimal NewBalance,
+    bool Visible = false
 );

@@ -5,6 +5,7 @@ import { Transactions } from "./Transactions";
 import { Rules } from "./Rules";
 import { EmailConfig } from "./EmailConfig";
 import { EmailParsingRules } from "./EmailParsingRules";
+import { Accounts } from "./Accounts";
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -96,3 +97,4 @@ export const transactionsApi = new Transactions(apiConfig);
 export const rulesApi = new Rules(apiConfig);
 export const emailConfigApi = new EmailConfig(apiConfig);
 export const emailParsingRulesApi = new EmailParsingRules(apiConfig);
+export const accountsApi = new Accounts(apiConfig);

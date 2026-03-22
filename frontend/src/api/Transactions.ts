@@ -37,6 +37,7 @@ export class Transactions<
       /** @format date-time */
       endDate?: string | null;
       search?: string | null;
+      accountIds?: number[] | null;
       targetCurrency?: string | null;
       /**
        * @format int32
@@ -94,6 +95,7 @@ export class Transactions<
       /** @format date-time */
       endDate?: string | null;
       search?: string | null;
+      accountIds?: number[] | null;
     },
     params: RequestParams = {},
   ) =>

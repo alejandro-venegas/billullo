@@ -5,6 +5,7 @@ import { AuthStore } from "@/features/auth/stores/AuthStore";
 import { EmailConfigStore } from "@/features/email/stores/EmailConfigStore";
 import { EmailParsingRuleStore } from "@/features/email/stores/EmailParsingRuleStore";
 import { PreferenceStore } from "@/features/preferences/stores/PreferenceStore";
+import { AccountStore } from "@/features/accounts/stores/AccountStore";
 
 export class RootStore {
   authStore: AuthStore;
@@ -14,6 +15,7 @@ export class RootStore {
   emailConfigStore: EmailConfigStore;
   emailParsingRuleStore: EmailParsingRuleStore;
   preferenceStore: PreferenceStore;
+  accountStore: AccountStore;
 
   constructor() {
     this.authStore = new AuthStore();
@@ -23,6 +25,7 @@ export class RootStore {
     this.emailConfigStore = new EmailConfigStore();
     this.emailParsingRuleStore = new EmailParsingRuleStore();
     this.preferenceStore = new PreferenceStore();
+    this.accountStore = new AccountStore();
 
     this.authStore.setOnAuthenticated(() => this.loadAll());
   }
@@ -35,6 +38,7 @@ export class RootStore {
       this.ruleStore.loadFromApi(),
       this.emailConfigStore.loadFromApi(),
       this.emailParsingRuleStore.loadFromApi(),
+      this.accountStore.loadFromApi(),
     ]);
   }
 

@@ -20,11 +20,12 @@ public class TransactionsController : AuthorizedControllerBase
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate,
         [FromQuery] string? search,
+        [FromQuery] long[]? accountIds,
         [FromQuery] string? targetCurrency,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25)
     {
-        var filters = new TransactionFilterParams(type, startDate, endDate, search, page, pageSize);
+        var filters = new TransactionFilterParams(type, startDate, endDate, search, accountIds, page, pageSize);
         var result = await _service.GetAllAsync(UserId, filters, targetCurrency);
         return Ok(result);
     }
@@ -35,9 +36,10 @@ public class TransactionsController : AuthorizedControllerBase
         [FromQuery] string? type = null,
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
-        [FromQuery] string? search = null)
+        [FromQuery] string? search = null,
+        [FromQuery] long[]? accountIds = null)
     {
-        var filters = new TransactionFilterParams(type, startDate, endDate, search);
+        var filters = new TransactionFilterParams(type, startDate, endDate, search, accountIds);
         var result = await _service.GetBalanceAsync(UserId, filters, targetCurrency);
         return Ok(result);
     }

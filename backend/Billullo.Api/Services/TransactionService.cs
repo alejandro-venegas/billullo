@@ -26,7 +26,9 @@ public class TransactionService : ITransactionService
     {
         var query = _db.Transactions
             .Include(t => t.Category)
+            .Include(t => t.Account)
             .Where(t => t.UserId == userId)
+            .Where(t => t.Source != TransactionSource.Adjustment)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(filters.Type) && filters.Type != "all")
@@ -43,6 +45,9 @@ public class TransactionService : ITransactionService
 
         if (!string.IsNullOrWhiteSpace(filters.Search))
             query = query.Where(t => t.Description.ToLower().Contains(filters.Search.ToLower()));
+
+        if (filters.AccountIds is { Length: > 0 })
+            query = query.Where(t => filters.AccountIds.Contains(t.AccountId));
 
         return query;
     }
@@ -159,6 +164,7 @@ public class TransactionService : ITransactionService
     {
         var transaction = await _db.Transactions
             .Include(t => t.Category)
+            .Include(t => t.Account)
             .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
         return transaction == null ? null : _mapper.Map<TransactionDto>(transaction);
@@ -175,6 +181,9 @@ public class TransactionService : ITransactionService
         transaction.CreatedAt = DateTime.UtcNow;
         transaction.UpdatedAt = DateTime.UtcNow;
 
+        // Resolve account
+        transaction.AccountId = await ResolveAccountIdAsync(userId, request.AccountId);
+
         _db.Transactions.Add(transaction);
         await _db.SaveChangesAsync();
 
@@ -183,6 +192,7 @@ public class TransactionService : ITransactionService
         // Reload with navigation properties
         var created = await _db.Transactions
             .Include(t => t.Category)
+            .Include(t => t.Account)
             .FirstAsync(t => t.Id == transaction.Id);
 
         return _mapper.Map<TransactionDto>(created);
@@ -201,11 +211,15 @@ public class TransactionService : ITransactionService
         _mapper.Map(request, transaction);
         transaction.UpdatedAt = DateTime.UtcNow;
 
+        if (request.AccountId.HasValue)
+            transaction.AccountId = await ResolveAccountIdAsync(userId, request.AccountId);
+
         await _db.SaveChangesAsync();
 
         // Reload with navigation properties
         var updated = await _db.Transactions
             .Include(t => t.Category)
+            .Include(t => t.Account)
             .FirstAsync(t => t.Id == transaction.Id);
 
         return _mapper.Map<TransactionDto>(updated);
@@ -256,5 +270,24 @@ public class TransactionService : ITransactionService
 
         if (!exists)
             throw new InvalidOperationException("Category not found.");
+    }
+
+    private async Task<long> ResolveAccountIdAsync(string userId, long? requestedAccountId)
+    {
+        if (requestedAccountId.HasValue)
+        {
+            var exists = await _db.Accounts
+                .AnyAsync(a => a.Id == requestedAccountId.Value && a.UserId == userId);
+            if (!exists)
+                throw new InvalidOperationException("Account not found.");
+            return requestedAccountId.Value;
+        }
+
+        // Fall back to default account
+        var defaultAccount = await _db.Accounts
+            .FirstOrDefaultAsync(a => a.UserId == userId && a.IsDefault);
+
+        return defaultAccount?.Id
+            ?? throw new InvalidOperationException("Default account not found. Please contact support.");
     }
 }

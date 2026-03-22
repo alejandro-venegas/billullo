@@ -26,6 +26,9 @@ public class Transaction
 
     public TransactionSource Source { get; set; } = TransactionSource.Manual;
 
+    public long AccountId { get; set; }
+    public Account Account { get; set; } = default!;
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

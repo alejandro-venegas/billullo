@@ -18,6 +18,7 @@ import type { CategoryTreeActions } from "@/features/categories/components/Categ
 import ConfirmDialog from "@/shared/components/ConfirmDialog/ConfirmDialog";
 import EmailConfigSection from "@/features/email/components/EmailConfigSection/EmailConfigSection";
 import EmailParsingRulesSection from "@/features/email/components/EmailParsingRulesSection/EmailParsingRulesSection";
+import AccountsSection from "@/features/accounts/components/AccountsSection/AccountsSection";
 import { CURRENCIES } from "@/shared/constants";
 import { useConfirmDelete } from "@/shared/hooks/useConfirmDelete";
 
@@ -151,6 +152,7 @@ const SettingsPage = observer(() => {
         <Tab label="Preferences" />
         <Tab label="Categories" />
         <Tab label="Email" />
+        <Tab label="Accounts" />
       </Tabs>
 
       {/* ─── Preferences Tab ─── */}
@@ -220,6 +222,11 @@ const SettingsPage = observer(() => {
           <EmailConfigSection />
           <EmailParsingRulesSection />
         </Stack>
+      </TabPanel>
+
+      {/* ─── Accounts Tab ─── */}
+      <TabPanel value={tab} index={3}>
+        <AccountsSection />
       </TabPanel>
 
       {/* Dialogs */}

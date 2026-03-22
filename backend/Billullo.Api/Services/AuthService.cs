@@ -21,6 +21,7 @@ public class AuthService : IAuthService
     private readonly IMapper _mapper;
     private readonly ICategoryService _categoryService;
     private readonly IEmailParsingRuleService _emailParsingRuleService;
+    private readonly IAccountService _accountService;
 
     public AuthService(
         UserManager<AppUser> userManager,
@@ -28,7 +29,8 @@ public class AuthService : IAuthService
         IConfiguration config,
         IMapper mapper,
         ICategoryService categoryService,
-        IEmailParsingRuleService emailParsingRuleService)
+        IEmailParsingRuleService emailParsingRuleService,
+        IAccountService accountService)
     {
         _userManager = userManager;
         _db = db;
@@ -36,6 +38,7 @@ public class AuthService : IAuthService
         _mapper = mapper;
         _categoryService = categoryService;
         _emailParsingRuleService = emailParsingRuleService;
+        _accountService = accountService;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -59,6 +62,7 @@ public class AuthService : IAuthService
 
         await _categoryService.SeedDefaultsAsync(user.Id);
         await _emailParsingRuleService.SeedDefaultsAsync(user.Id);
+        await _accountService.SeedDefaultAccountAsync(user.Id);
 
         return await GenerateAuthResponseAsync(user);
     }

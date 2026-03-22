@@ -9,9 +9,10 @@ import { transactionsApi } from "@/api/apiConfig";
 import { useStore } from "@/app/stores/StoreContext";
 import type { TransactionBalanceDto } from "@/api/data-contracts";
 import { formatCurrency } from "@/shared/utils/currency";
+import AccountCards from "@/features/accounts/components/AccountCards/AccountCards";
 
 const BalanceSummary = observer(() => {
-  const { transactionStore, preferenceStore } = useStore();
+  const { preferenceStore } = useStore();
   const [balance, setBalance] = useState<TransactionBalanceDto | null>(null);
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -26,13 +27,6 @@ const BalanceSummary = observer(() => {
       const data = await transactionsApi.transactionsGetBalance(
         {
           targetCurrency: preferenceStore.preferredCurrency,
-          type:
-            transactionStore.typeFilter !== "all"
-              ? transactionStore.typeFilter
-              : undefined,
-          startDate: transactionStore.startDate ?? undefined,
-          endDate: transactionStore.endDate ?? undefined,
-          search: transactionStore.search || undefined,
         },
         { signal: controller.signal },
       );
@@ -55,17 +49,11 @@ const BalanceSummary = observer(() => {
   useEffect(
     () =>
       reaction(
-        () => ({
-          currency: preferenceStore.preferredCurrency,
-          type: transactionStore.typeFilter,
-          start: transactionStore.startDate,
-          end: transactionStore.endDate,
-          search: transactionStore.search,
-        }),
+        () => preferenceStore.preferredCurrency,
         () => fetchBalance(),
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [transactionStore, preferenceStore],
+    [preferenceStore],
   );
 
   const breakdownText =
@@ -84,37 +72,38 @@ const BalanceSummary = observer(() => {
         borderRadius: 2,
         border: 1,
         borderColor: "divider",
-        display: "flex",
-        alignItems: "center",
-        gap: 1,
       }}
     >
-      <Typography variant="subtitle2" color="text.secondary">
-        Balance:
-      </Typography>
-      {loading && !balance ? (
-        <CircularProgress size={20} />
-      ) : balance ? (
-        <Tooltip
-          title={breakdownText}
-          placement="bottom-start"
-          disableHoverListener={
-            !balance.breakdown || balance.breakdown.length <= 1
-          }
-        >
-          <Typography variant="h6" fontWeight={600}>
-            {formatCurrency(
-              Number(balance.total),
-              balance.targetCurrency ?? "USD",
-            )}
-          </Typography>
-        </Tooltip>
-      ) : (
-        <Typography variant="h6" fontWeight={600} color="text.secondary">
-          --
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Typography variant="subtitle2" color="text.secondary">
+          Balance:
         </Typography>
-      )}
-      {loading && balance && <CircularProgress size={16} sx={{ ml: 1 }} />}
+        {loading && !balance ? (
+          <CircularProgress size={20} />
+        ) : balance ? (
+          <Tooltip
+            title={breakdownText}
+            placement="bottom-start"
+            disableHoverListener={
+              !balance.breakdown || balance.breakdown.length <= 1
+            }
+          >
+            <Typography variant="h6" fontWeight={600}>
+              {formatCurrency(
+                Number(balance.total),
+                balance.targetCurrency ?? "USD",
+              )}
+            </Typography>
+          </Tooltip>
+        ) : (
+          <Typography variant="h6" fontWeight={600} color="text.secondary">
+            --
+          </Typography>
+        )}
+        {loading && balance && <CircularProgress size={16} sx={{ ml: 1 }} />}
+      </Box>
+
+      <AccountCards />
     </Box>
   );
 });

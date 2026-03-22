@@ -9,6 +9,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<CategoryRule> CategoryRules => Set<CategoryRule>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
@@ -67,6 +68,19 @@ public class AppDbContext : IdentityDbContext<AppUser>
     {
         base.OnModelCreating(builder);
 
+        // ── Account ──
+        builder.Entity<Account>(e =>
+        {
+            e.HasIndex(a => a.UserId);
+            e.HasIndex(a => new { a.UserId, a.Name }).IsUnique();
+            e.Property(a => a.FallbackCurrency).HasConversion<string?>().HasMaxLength(10);
+
+            e.HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         // ── Transaction ──
         builder.Entity<Transaction>(e =>
         {
@@ -74,7 +88,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
             e.HasIndex(t => t.Date);
             e.Property(t => t.Currency).HasConversion<string>().HasMaxLength(10);
             e.Property(t => t.Type).HasConversion<string>().HasMaxLength(10);
-            e.Property(t => t.Source).HasConversion<string>().HasMaxLength(10);
+            e.Property(t => t.Source).HasConversion<string>().HasMaxLength(20);
             e.Property(t => t.Amount).HasPrecision(18, 2);
 
             e.HasOne(t => t.User)
@@ -86,6 +100,11 @@ public class AppDbContext : IdentityDbContext<AppUser>
                 .WithMany(c => c.Transactions)
                 .HasForeignKey(t => t.CategoryId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasOne(t => t.Account)
+                .WithMany(a => a.Transactions)
+                .HasForeignKey(t => t.AccountId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── Category ──

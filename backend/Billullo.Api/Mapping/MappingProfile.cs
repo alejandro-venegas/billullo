@@ -11,6 +11,7 @@ public class MappingProfile : Profile
         // ── Transaction ──
         CreateMap<Transaction, TransactionDto>()
             .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : null))
+            .ForMember(d => d.AccountName, o => o.MapFrom(s => s.Account != null ? s.Account.Name : null))
             .ForMember(d => d.Currency, o => o.MapFrom(s => s.Currency.ToString()))
             .ForMember(d => d.Type, o => o.MapFrom(s => s.Type.ToString().ToLowerInvariant()))
             .ForMember(d => d.Source, o => o.MapFrom(s => s.Source.ToString().ToLowerInvariant()))
@@ -25,6 +26,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.User, o => o.Ignore())
             .ForMember(d => d.Category, o => o.Ignore())
             .ForMember(d => d.Source, o => o.Ignore())
+            .ForMember(d => d.AccountId, o => o.Ignore())
+            .ForMember(d => d.Account, o => o.Ignore())
             .ForMember(d => d.CreatedAt, o => o.Ignore())
             .ForMember(d => d.UpdatedAt, o => o.Ignore());
 
@@ -36,6 +39,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.User, o => o.Ignore())
             .ForMember(d => d.Category, o => o.Ignore())
             .ForMember(d => d.Source, o => o.Ignore())
+            .ForMember(d => d.AccountId, o => o.Ignore())
+            .ForMember(d => d.Account, o => o.Ignore())
             .ForMember(d => d.CreatedAt, o => o.Ignore())
             .ForMember(d => d.UpdatedAt, o => o.Ignore());
 
@@ -104,6 +109,14 @@ public class MappingProfile : Profile
             .ForMember(d => d.UserId, o => o.Ignore())
             .ForMember(d => d.User, o => o.Ignore())
             .ForMember(d => d.Category, o => o.Ignore());
+
+        // ── Account ──
+        CreateMap<Account, AccountDto>()
+            .ForMember(d => d.Currencies, o => o.MapFrom(s =>
+                string.IsNullOrEmpty(s.Currencies) ? null : s.Currencies.Split(',', StringSplitOptions.RemoveEmptyEntries)))
+            .ForMember(d => d.FallbackCurrency, o => o.MapFrom(s =>
+                s.FallbackCurrency.HasValue ? s.FallbackCurrency.Value.ToString() : null))
+            .ForMember(d => d.TransactionCount, o => o.MapFrom(s => s.Transactions.Count));
 
         // ── AppUser → UserDto ──
         CreateMap<AppUser, UserDto>()

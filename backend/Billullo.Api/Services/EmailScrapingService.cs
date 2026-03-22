@@ -144,6 +144,8 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
                 var dataProtection = scope.ServiceProvider.GetRequiredService<IDataProtectionProvider>();
                 var protector = dataProtection.CreateProtector("EmailConfig.Password");
                 var parser = scope.ServiceProvider.GetRequiredService<IEmailParserService>();
+                var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
+                var currencyService = scope.ServiceProvider.GetRequiredService<ICurrencyService>();
 
                 var config = await db.EmailConfigs
                     .FirstOrDefaultAsync(ec => ec.UserId == userId && ec.Enabled, cancellationToken);
@@ -179,7 +181,7 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
                 await inbox.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
 
                 // Process any unread emails since last check
-                await ProcessNewEmailsAsync(db, parser, inbox, config, cancellationToken);
+                await ProcessNewEmailsAsync(db, parser, accountService, currencyService, inbox, config, cancellationToken);
 
                 // Enter IDLE loop
                 while (!cancellationToken.IsCancellationRequested)
@@ -215,13 +217,15 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
                             using var innerScope = _scopeFactory.CreateScope();
                             var innerDb = innerScope.ServiceProvider.GetRequiredService<AppDbContext>();
                             var innerParser = innerScope.ServiceProvider.GetRequiredService<IEmailParserService>();
+                            var innerAccountService = innerScope.ServiceProvider.GetRequiredService<IAccountService>();
+                            var innerCurrencyService = innerScope.ServiceProvider.GetRequiredService<ICurrencyService>();
 
                             // Reload config for latest LastCheckedUid
                             var freshConfig = await innerDb.EmailConfigs
                                 .FirstOrDefaultAsync(ec => ec.UserId == userId, cancellationToken);
 
                             if (freshConfig != null)
-                                await ProcessNewEmailsAsync(innerDb, innerParser, inbox, freshConfig, cancellationToken);
+                                await ProcessNewEmailsAsync(innerDb, innerParser, innerAccountService, innerCurrencyService, inbox, freshConfig, cancellationToken);
                         }
                     }
                     else
@@ -232,12 +236,14 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
                         using var innerScope = _scopeFactory.CreateScope();
                         var innerDb = innerScope.ServiceProvider.GetRequiredService<AppDbContext>();
                         var innerParser = innerScope.ServiceProvider.GetRequiredService<IEmailParserService>();
+                        var innerAccountService = innerScope.ServiceProvider.GetRequiredService<IAccountService>();
+                        var innerCurrencyService = innerScope.ServiceProvider.GetRequiredService<ICurrencyService>();
 
                         var freshConfig = await innerDb.EmailConfigs
                             .FirstOrDefaultAsync(ec => ec.UserId == userId, cancellationToken);
 
                         if (freshConfig != null)
-                            await ProcessNewEmailsAsync(innerDb, innerParser, inbox, freshConfig, cancellationToken);
+                            await ProcessNewEmailsAsync(innerDb, innerParser, innerAccountService, innerCurrencyService, inbox, freshConfig, cancellationToken);
                     }
                 }
 
@@ -270,6 +276,8 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
     private async Task ProcessNewEmailsAsync(
         AppDbContext db,
         IEmailParserService parser,
+        IAccountService accountService,
+        ICurrencyService currencyService,
         IMailFolder inbox,
         EmailConfig config,
         CancellationToken cancellationToken)
@@ -319,7 +327,7 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
                 try
                 {
                     var message = await inbox.GetMessageAsync(uid, cancellationToken);
-                    await TryCreateTransactionFromEmailAsync(db, parser, config.UserId, message, parsingRules, cancellationToken);
+                    await TryCreateTransactionFromEmailAsync(db, parser, accountService, currencyService, config.UserId, message, parsingRules, cancellationToken);
 
                     if (uid.Id > maxUid)
                         maxUid = uid.Id;
@@ -346,6 +354,8 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
     private async Task TryCreateTransactionFromEmailAsync(
         AppDbContext db,
         IEmailParserService parser,
+        IAccountService accountService,
+        ICurrencyService currencyService,
         string userId,
         MimeMessage message,
         List<EmailParsingRule> parsingRules,
@@ -353,8 +363,7 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
     {
         var sender = message.From.Mailboxes.FirstOrDefault()?.Address ?? string.Empty;
         var subject = message.Subject ?? string.Empty;
-        var rawBody = message.TextBody ?? message.HtmlBody ?? string.Empty;
-        var body = rawBody.Length > 3000 ? rawBody[..3000] : rawBody;
+        var body = message.TextBody ?? message.HtmlBody ?? string.Empty;
 
         foreach (var rule in parsingRules)
         {
@@ -377,8 +386,15 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
                 }
             }
 
-            // Rule matched — parse the email with AI
-            var result = await parser.ParseEmailAsync(body, fallbackDate: message.Date.UtcDateTime);
+            // Rule matched — parse the email and match account with AI in a single call
+            var candidateAccounts = await db.Accounts
+                .Where(a => a.UserId == userId && !a.IsDefault && a.Identifier != null)
+                .OrderBy(a => a.Name)
+                .ToListAsync();
+
+            var result = await parser.ParseEmailAsync(body,
+                fallbackDate: message.Date.UtcDateTime,
+                candidateAccounts: candidateAccounts);
 
             if (!result.Matched || !result.Amount.HasValue || !result.Date.HasValue) continue;
 
@@ -389,14 +405,57 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
                 currency = parsedCurrency;
 
             var description = rule.DescriptionFixed ?? result.Description ?? subject;
+            var amount = result.Amount.Value;
+
+            // Use AI-matched account, or fall back to default
+            var accountId = result.AccountId
+                ?? (await db.Accounts.FirstAsync(a => a.UserId == userId && a.IsDefault)).Id;
+            var account = await db.Accounts.FindAsync(accountId);
+
+            // If account restricts currencies and transaction currency is not allowed, convert
+            if (account != null && !string.IsNullOrEmpty(account.Currencies))
+            {
+                var allowed = account.Currencies
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(c => Enum.Parse<Currency>(c.Trim(), true))
+                    .ToList();
+
+                if (!allowed.Contains(currency))
+                {
+                    var targetCurrency = allowed.Count == 1
+                        ? allowed[0]
+                        : account.FallbackCurrency ?? allowed[0];
+
+                    var from = currency.ToString();
+                    var to = targetCurrency.ToString();
+
+                    var rate = await currencyService.GetRateNearestToDateAsync(from, to, result.Date.Value)
+                        ?? await currencyService.GetLatestRateAsync(from, to);
+
+                    if (rate != null)
+                    {
+                        amount = Math.Round(amount * rate.Rate, 2);
+                    }
+                    else
+                    {
+                        var inverse = await currencyService.GetRateNearestToDateAsync(to, from, result.Date.Value)
+                            ?? await currencyService.GetLatestRateAsync(to, from);
+                        if (inverse != null && inverse.Rate != 0)
+                            amount = Math.Round(amount / inverse.Rate, 2);
+                    }
+
+                    currency = targetCurrency;
+                }
+            }
 
             var transaction = new Transaction
             {
                 UserId = userId,
+                AccountId = accountId,
                 Date = result.Date.Value,
                 Description = description,
                 CategoryId = rule.CategoryId,
-                Amount = result.Amount.Value,
+                Amount = amount,
                 Currency = currency,
                 Type = rule.TransactionType,
                 Source = TransactionSource.Email,
@@ -408,8 +467,8 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
             await db.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
-                "Created transaction from email for user {UserId}: {Amount} {Currency} - {Description}",
-                userId, transaction.Amount, transaction.Currency, transaction.Description);
+                "Created transaction from email for user {UserId}: {Amount} {Currency} - {Description} (Account: {AccountId})",
+                userId, transaction.Amount, transaction.Currency, transaction.Description, transaction.AccountId);
 
             break; // Only first matching rule creates a transaction
         }

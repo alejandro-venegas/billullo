@@ -13,4 +13,9 @@ public interface ICurrencyService
     /// Returns the most recently stored rate for the given currency pair, or null if none exists.
     /// </summary>
     Task<ExchangeRate?> GetLatestRateAsync(string baseCurrency, string quoteCurrency);
+
+    /// <summary>
+    /// Returns the exchange rate closest to the given date, falling back to the latest rate if none found.
+    /// </summary>
+    Task<ExchangeRate?> GetRateNearestToDateAsync(string baseCurrency, string quoteCurrency, DateTime targetDate);
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { observer } from "mobx-react-lite";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -37,10 +37,14 @@ interface TransactionDialogProps {
 
 const TransactionDialog = observer(
   ({ open, onClose, transaction }: TransactionDialogProps) => {
-    const { transactionStore, categoryStore, ruleStore } = useStore();
+    const { transactionStore, categoryStore, ruleStore, accountStore } =
+      useStore();
     const { notify } = useNotification();
     const isEdit = Boolean(transaction);
 
+    const [accountId, setAccountId] = useState<number | "">(
+      accountStore.defaultAccount?.id ?? "",
+    );
     const [date, setDate] = useState<Dayjs | null>(dayjs());
     const [description, setDescription] = useState("");
     const [category, setCategory] = useState("");
@@ -50,12 +54,30 @@ const TransactionDialog = observer(
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const selectedAccount = useMemo(
+      () => accountStore.accounts.find((a) => a.id === accountId),
+      [accountStore.accounts, accountId],
+    );
+
+    const currencyOptions = useMemo(() => {
+      const acctCurrencies = selectedAccount?.currencies;
+      if (acctCurrencies && acctCurrencies.length > 0) {
+        return acctCurrencies;
+      }
+      return [...CURRENCIES];
+    }, [selectedAccount]);
+
+    const isCurrencyLocked =
+      selectedAccount?.currencies != null &&
+      selectedAccount.currencies.length === 1;
+
     const { matchInfo, ruleConflict, conflictDetails, checkMatch, resetMatch } =
       useDebouncedRuleMatch(ruleStore, categoryStore);
 
     useEffect(() => {
       if (open) {
         if (transaction) {
+          setAccountId(transaction.accountId ?? accountStore.defaultAccount?.id ?? "");
           setDate(dayjs(transaction.date));
           setDescription(transaction.description);
           setCategory(String(transaction.categoryId ?? ""));
@@ -63,6 +85,7 @@ const TransactionDialog = observer(
           setCurrency(transaction.currency);
           setType(transaction.type);
         } else {
+          setAccountId(accountStore.defaultAccount?.id ?? "");
           setDate(dayjs());
           setDescription("");
           setCategory("");
@@ -73,7 +96,27 @@ const TransactionDialog = observer(
         resetMatch();
         setErrors({});
       }
-    }, [open, transaction, resetMatch]);
+    }, [open, transaction, resetMatch, accountStore.defaultAccount?.id]);
+
+    const handleAccountChange = useCallback(
+      (newAccountId: number | "") => {
+        setAccountId(newAccountId);
+        if (newAccountId !== "") {
+          const acct = accountStore.accounts.find((a) => a.id === newAccountId);
+          const acctCurrencies = acct?.currencies;
+          if (acctCurrencies && acctCurrencies.length === 1) {
+            setCurrency(acctCurrencies[0]);
+          } else if (
+            acctCurrencies &&
+            acctCurrencies.length > 1 &&
+            !acctCurrencies.includes(currency)
+          ) {
+            setCurrency(acctCurrencies[0]);
+          }
+        }
+      },
+      [accountStore.accounts, currency],
+    );
 
     const handleDescriptionChange = useCallback(
       (value: string) => {
@@ -108,6 +151,7 @@ const TransactionDialog = observer(
           amount: parseFloat(amount),
           currency,
           type,
+          accountId: accountId !== "" ? accountId : undefined,
         };
 
         if (transaction) {
@@ -155,6 +199,24 @@ const TransactionDialog = observer(
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
+
+            <TextField
+              select
+              label="Account"
+              value={accountId}
+              onChange={(e) =>
+                handleAccountChange(
+                  e.target.value === "" ? "" : Number(e.target.value),
+                )
+              }
+              fullWidth
+            >
+              {accountStore.accounts.map((a) => (
+                <MenuItem key={a.id} value={a.id}>
+                  {a.name}
+                </MenuItem>
+              ))}
+            </TextField>
 
             <DateTimePicker
               label="Date & Time"
@@ -230,9 +292,10 @@ const TransactionDialog = observer(
                 label="Currency"
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
+                disabled={isCurrencyLocked}
                 sx={{ minWidth: 120 }}
               >
-                {CURRENCIES.map((c) => (
+                {currencyOptions.map((c) => (
                   <MenuItem key={c} value={c}>
                     {c}
                   </MenuItem>
