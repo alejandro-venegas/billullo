@@ -17,16 +17,22 @@ export class AuthStore {
   error: string | null = null;
 
   private onAuthenticated: (() => void) | null = null;
+  private onLogout: (() => void) | null = null;
 
   constructor() {
-    makeAutoObservable<AuthStore, "onAuthenticated">(this, {
+    makeAutoObservable<AuthStore, "onAuthenticated" | "onLogout">(this, {
       onAuthenticated: false,
+      onLogout: false,
     });
   }
 
   /** Called by RootStore so data stores reload after login / refresh */
   setOnAuthenticated(cb: () => void) {
     this.onAuthenticated = cb;
+  }
+
+  setOnLogout(cb: () => void) {
+    this.onLogout = cb;
   }
 
   async initialize() {
@@ -105,6 +111,7 @@ export class AuthStore {
       this.user = null;
       this.isAuthenticated = false;
     });
+    this.onLogout?.();
   }
 
   private async refreshSession(refreshToken: string) {

@@ -53,6 +53,18 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
         ClockSkew = TimeSpan.Zero
     };
+    // Allow JWT via query string for SignalR WebSocket handshake
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Query["access_token"];
+            if (!string.IsNullOrEmpty(token) &&
+                context.Request.Path.StartsWithSegments("/hubs"))
+                context.Token = token;
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // ── Data Protection (for encrypting email passwords at rest) ──
@@ -92,6 +104,9 @@ builder.Services.AddHostedService<CurrencyRateSyncService>();
 builder.Services.AddSingleton<EmailScrapingService>();
 builder.Services.AddSingleton<IEmailScrapingControl>(sp => sp.GetRequiredService<EmailScrapingService>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<EmailScrapingService>());
+
+// ── SignalR ──
+builder.Services.AddSignalR();
 
 // ── Exception Handling ──
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -144,5 +159,6 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<Billullo.Api.Hubs.BillulloHub>("/hubs/billullo");
 
 app.Run();

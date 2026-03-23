@@ -9,4 +9,5 @@ public interface IEmailConfigService
     Task<bool> DeleteAsync(string userId);
     Task<TestConnectionResult> TestConnectionAsync(TestEmailConfigRequest request);
     Task<TestScrapeResult> TestScrapeAsync(string userId);
+    Task ScrapeAsync(string userId, int count);
 }

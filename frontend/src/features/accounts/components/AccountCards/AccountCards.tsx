@@ -15,6 +15,7 @@ import type {
   TransactionBalanceDto,
 } from "@/api/data-contracts";
 import { formatCurrency } from "@/shared/utils/currency";
+import { signalRService } from "@/shared/signalRService";
 import BalanceAdjustPopover from "./BalanceAdjustPopover";
 
 interface AccountBalanceState {
@@ -93,6 +94,11 @@ const AccountCards = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [preferenceStore, fetchAllBalances],
   );
+
+  useEffect(() => {
+    signalRService.on("TransactionCreated", fetchAllBalances);
+    return () => signalRService.off("TransactionCreated", fetchAllBalances);
+  }, [fetchAllBalances]);
 
   const handleOpenPopover = (
     event: React.MouseEvent<HTMLElement>,

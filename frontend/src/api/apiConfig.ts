@@ -28,6 +28,10 @@ export function clearTokens() {
   localStorage.removeItem("billullo_refresh_token");
 }
 
+export function getAccessToken(): string {
+  return accessToken ?? "";
+}
+
 export function hasStoredRefreshToken(): boolean {
   return !!localStorage.getItem("billullo_refresh_token");
 }

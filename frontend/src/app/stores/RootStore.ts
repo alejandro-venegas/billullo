@@ -6,6 +6,8 @@ import { EmailConfigStore } from "@/features/email/stores/EmailConfigStore";
 import { EmailParsingRuleStore } from "@/features/email/stores/EmailParsingRuleStore";
 import { PreferenceStore } from "@/features/preferences/stores/PreferenceStore";
 import { AccountStore } from "@/features/accounts/stores/AccountStore";
+import { signalRService } from "@/shared/signalRService";
+import { getAccessToken } from "@/api/apiConfig";
 
 export class RootStore {
   authStore: AuthStore;
@@ -27,7 +29,14 @@ export class RootStore {
     this.preferenceStore = new PreferenceStore();
     this.accountStore = new AccountStore();
 
-    this.authStore.setOnAuthenticated(() => this.loadAll());
+    this.authStore.setOnAuthenticated(() => {
+      signalRService.connect(getAccessToken);
+      signalRService.on("TransactionCreated", () =>
+        this.transactionStore.loadFromApi(),
+      );
+      this.loadAll();
+    });
+    this.authStore.setOnLogout(() => signalRService.disconnect());
   }
 
   async loadAll() {

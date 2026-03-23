@@ -9,6 +9,7 @@ import { transactionsApi } from "@/api/apiConfig";
 import { useStore } from "@/app/stores/StoreContext";
 import type { TransactionBalanceDto } from "@/api/data-contracts";
 import { formatCurrency } from "@/shared/utils/currency";
+import { signalRService } from "@/shared/signalRService";
 import AccountCards from "@/features/accounts/components/AccountCards/AccountCards";
 
 const BalanceSummary = observer(() => {
@@ -55,6 +56,13 @@ const BalanceSummary = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [preferenceStore],
   );
+
+  useEffect(() => {
+    const handler = () => fetchBalance();
+    signalRService.on("TransactionCreated", handler);
+    return () => signalRService.off("TransactionCreated", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const breakdownText =
     balance?.breakdown

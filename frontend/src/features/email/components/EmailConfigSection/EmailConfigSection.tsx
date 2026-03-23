@@ -12,8 +12,10 @@ import CircularProgress from "@mui/material/CircularProgress";
 import SaveIcon from "@mui/icons-material/Save";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DownloadIcon from "@mui/icons-material/Download";
 import { useStore } from "@/app/stores/StoreContext";
 import { useNotification } from "@/shared/components/NotificationProvider/NotificationProvider";
+import ScrapeProgressToast from "../ScrapeProgressToast/ScrapeProgressToast";
 
 const EmailConfigSection = observer(() => {
   const { emailConfigStore } = useStore();
@@ -34,6 +36,8 @@ const EmailConfigSection = observer(() => {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const { isScraping } = emailConfigStore;
 
   // Sync form when config loads
   useEffect(() => {
@@ -212,17 +216,30 @@ const EmailConfigSection = observer(() => {
             Test Connection
           </Button>
           {config && (
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={handleDelete}
-            >
-              Remove
-            </Button>
+            <>
+              <Button
+                variant="outlined"
+                startIcon={
+                  isScraping ? <CircularProgress size={18} /> : <DownloadIcon />
+                }
+                onClick={() => emailConfigStore.scrape()}
+                disabled={isScraping}
+              >
+                Scrape last 100
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={handleDelete}
+              >
+                Remove
+              </Button>
+            </>
           )}
         </Stack>
       </Stack>
+      <ScrapeProgressToast />
     </Paper>
   );
 });

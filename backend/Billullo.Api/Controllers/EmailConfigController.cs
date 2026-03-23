@@ -50,4 +50,12 @@ public class EmailConfigController : AuthorizedControllerBase
             return BadRequest(result);
         return Ok(result);
     }
+
+    [HttpPost("scrape")]
+    public IActionResult Scrape()
+    {
+        // Fire-and-forget — progress is pushed to the client via SignalR events.
+        _ = Task.Run(() => _service.ScrapeAsync(UserId, 100));
+        return Accepted();
+    }
 }

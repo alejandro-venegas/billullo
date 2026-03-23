@@ -8,4 +8,11 @@ public interface IEmailScrapingControl
     /// instead of waiting for the next periodic 60-second poll.
     /// </summary>
     void NotifyConfigChanged(string userId);
+
+    /// <summary>
+    /// Processes the last <paramref name="count"/> emails for the given user, regardless
+    /// of <c>LastCheckedUid</c>. Progress is pushed to the user via SignalR events:
+    /// <c>ScrapeProgress</c>, <c>ScrapeDone</c>, and <c>ScrapeError</c>.
+    /// </summary>
+    Task ScrapeAsync(string userId, int count, CancellationToken ct = default);
 }

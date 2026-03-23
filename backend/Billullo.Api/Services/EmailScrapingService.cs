@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
 using Billullo.Api.Data;
+using Billullo.Api.Hubs;
 using Billullo.Api.Models;
 using Billullo.Api.Services.Interfaces;
 using MailKit;
@@ -8,6 +9,7 @@ using MailKit.Net.Imap;
 using MailKit.Search;
 using MailKit.Security;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
 
@@ -21,6 +23,7 @@ namespace Billullo.Api.Services;
 public class EmailScrapingService : BackgroundService, IEmailScrapingControl
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IHubContext<BillulloHub> _hubContext;
     private readonly ILogger<EmailScrapingService> _logger;
 
     // Track active connections per user
@@ -35,9 +38,10 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
     public void NotifyConfigChanged(string userId) =>
         _configChangedChannel.Writer.TryWrite(userId);
 
-    public EmailScrapingService(IServiceScopeFactory scopeFactory, ILogger<EmailScrapingService> logger)
+    public EmailScrapingService(IServiceScopeFactory scopeFactory, IHubContext<BillulloHub> hubContext, ILogger<EmailScrapingService> logger)
     {
         _scopeFactory = scopeFactory;
+        _hubContext = hubContext;
         _logger = logger;
     }
 
@@ -351,7 +355,7 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
         }
     }
 
-    private async Task TryCreateTransactionFromEmailAsync(
+    private async Task<bool> TryCreateTransactionFromEmailAsync(
         AppDbContext db,
         IEmailParserService parser,
         IAccountService accountService,
@@ -470,7 +474,112 @@ public class EmailScrapingService : BackgroundService, IEmailScrapingControl
                 "Created transaction from email for user {UserId}: {Amount} {Currency} - {Description} (Account: {AccountId})",
                 userId, transaction.Amount, transaction.Currency, transaction.Description, transaction.AccountId);
 
-            break; // Only first matching rule creates a transaction
+            await _hubContext.Clients.Group(userId).SendAsync("TransactionCreated", cancellationToken);
+
+            return true; // Only first matching rule creates a transaction
+        }
+
+        return false;
+    }
+
+    public async Task ScrapeAsync(string userId, int count, CancellationToken ct = default)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dataProtection = scope.ServiceProvider.GetRequiredService<IDataProtectionProvider>();
+            var protector = dataProtection.CreateProtector("EmailConfig.Password");
+            var parser = scope.ServiceProvider.GetRequiredService<IEmailParserService>();
+            var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
+            var currencyService = scope.ServiceProvider.GetRequiredService<ICurrencyService>();
+
+            var config = await db.EmailConfigs
+                .FirstOrDefaultAsync(ec => ec.UserId == userId, ct);
+
+            if (config == null)
+            {
+                await _hubContext.Clients.Group(userId).SendAsync("ScrapeError", new { message = "No email configuration found." }, ct);
+                return;
+            }
+
+            string password;
+            try { password = protector.Unprotect(config.EncryptedPassword); }
+            catch
+            {
+                await _hubContext.Clients.Group(userId).SendAsync("ScrapeError", new { message = "Failed to decrypt email password." }, ct);
+                return;
+            }
+
+            var parsingRules = await db.EmailParsingRules
+                .Where(r => r.UserId == userId)
+                .OrderBy(r => r.Priority)
+                .ToListAsync(ct);
+
+            if (parsingRules.Count == 0)
+            {
+                await _hubContext.Clients.Group(userId).SendAsync("ScrapeError", new { message = "No parsing rules configured." }, ct);
+                return;
+            }
+
+            using var imapClient = new ImapClient();
+            var sslOptions = config.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTlsWhenAvailable;
+            await imapClient.ConnectAsync(config.ImapHost, config.ImapPort, sslOptions, ct);
+            await imapClient.AuthenticateAsync(config.EmailAddress, password, ct);
+
+            var inbox = imapClient.Inbox;
+            await inbox.OpenAsync(FolderAccess.ReadOnly, ct);
+
+            var allUids = await inbox.SearchAsync(SearchQuery.All, ct);
+            var uids = allUids.Count > count
+                ? allUids.Skip(allUids.Count - count).ToList()
+                : allUids.ToList();
+
+            var total = uids.Count;
+            var processed = 0;
+            var created = 0;
+            uint maxUid = config.LastCheckedUid ?? 0;
+
+            await _hubContext.Clients.Group(userId).SendAsync("ScrapeProgress", new { processed, total, created }, ct);
+
+            foreach (var uid in uids)
+            {
+                if (ct.IsCancellationRequested) break;
+
+                try
+                {
+                    var message = await inbox.GetMessageAsync(uid, ct);
+                    var wasCreated = await TryCreateTransactionFromEmailAsync(
+                        db, parser, accountService, currencyService, userId, message, parsingRules, ct);
+
+                    processed++;
+                    if (wasCreated) created++;
+                    if (uid.Id > maxUid) maxUid = uid.Id;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error processing email UID {Uid} during scrape for user {UserId}", uid, userId);
+                    processed++;
+                }
+
+                await _hubContext.Clients.Group(userId).SendAsync("ScrapeProgress", new { processed, total, created }, ct);
+            }
+
+            if (maxUid > (config.LastCheckedUid ?? 0))
+            {
+                config.LastCheckedUid = maxUid;
+                await db.SaveChangesAsync(ct);
+            }
+
+            await imapClient.DisconnectAsync(true, ct);
+
+            _logger.LogInformation("Backfill scrape for user {UserId}: processed={Processed}, created={Created}", userId, processed, created);
+            await _hubContext.Clients.Group(userId).SendAsync("ScrapeDone", new { processed, created }, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Backfill scrape failed for user {UserId}", userId);
+            await _hubContext.Clients.Group(userId).SendAsync("ScrapeError", new { message = ex.Message });
         }
     }
 }

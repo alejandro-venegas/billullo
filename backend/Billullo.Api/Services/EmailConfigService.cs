@@ -258,6 +258,9 @@ public class EmailConfigService : IEmailConfigService
         }
     }
 
+    public Task ScrapeAsync(string userId, int count) =>
+        _scrapingControl.ScrapeAsync(userId, count);
+
     /// <summary>
     /// Decrypts the stored password for a given EmailConfig. Used internally by the email scraping service.
     /// </summary>

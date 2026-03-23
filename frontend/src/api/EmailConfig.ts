@@ -101,4 +101,14 @@ export class EmailConfig<
       format: "json",
       ...params,
     });
+  /**
+   * @name EmailConfigScrape
+   * @request POST:/api/EmailConfig/scrape
+   */
+  emailConfigScrape = (params: RequestParams = {}) =>
+    this.request<void, any>({
+      path: `/api/EmailConfig/scrape`,
+      method: "POST",
+      ...params,
+    });
 }
